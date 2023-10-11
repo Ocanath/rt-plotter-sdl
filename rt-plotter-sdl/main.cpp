@@ -4,6 +4,7 @@ and may not be redistributed without written permission.*/
 //Using SDL and standard IO
 #include <SDL.h>
 #include <stdio.h>
+#include <math.h>
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -34,6 +35,8 @@ int main(int argc, char* args[])
 		{
 			//Get window surface
 			screenSurface = SDL_GetWindowSurface(window);
+			SDL_Renderer* pRenderer = SDL_CreateRenderer(window, -1, 0);
+			SDL_SetRenderDrawColor(pRenderer, 255, 255, 255, 255);
 
 			//Fill the surface white
 			SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 10, 10, 10));
@@ -44,8 +47,26 @@ int main(int argc, char* args[])
 			//Hack to get window to stay up
 			SDL_Event e; 
 			bool quit = false; 
+			int inc = 0;
 			while (quit == false) 
 			{
+				SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 10, 10, 10));
+
+				uint64_t tick = SDL_GetTicks64();
+				float t = ((float)tick) * 0.001f;
+
+				float ft = t * 10;
+
+				SDL_Rect rectangule;
+				rectangule.x = SCREEN_WIDTH / 2;
+				rectangule.y = SCREEN_HEIGHT / 2;
+				rectangule.w = (int)( (sin(ft)*0.5f + 0.5f) * 100)+50;
+				rectangule.h = (int)( (cos(ft)*0.5f + 0.5f) * 100)+50;
+				SDL_FillRect(screenSurface, &rectangule, SDL_MapRGB(screenSurface->format, 255, 255, 255));
+				SDL_UpdateWindowSurface(window);
+
+
+
 				SDL_PollEvent(&e);
 				{ 
 					if (e.type == SDL_QUIT) 
