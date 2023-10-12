@@ -64,7 +64,7 @@ if __name__ == "__main__":
 	start_time = time.time()
 	try:
 		iteration = 0
-		vals = np.zeros(6)
+		vals = np.zeros(4)
 		
 		while(True):
 			
@@ -73,7 +73,7 @@ if __name__ == "__main__":
 			"""
 			t = time.time() - start_time					
 			for i in range(0,len(vals)):
-				vals[i] = 1.0*np.sin(t*2*np.pi*3 + 2*np.pi/len(vals)*i)
+				vals[i] = 1.0*np.sin(t*2*np.pi + 2*np.pi/len(vals)*i)
 
 
 			"""
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 			
 
 
-			# time.sleep(0.05)	#note: removing this delay doesn't break the software per-se (the algorithm to frame and decode chugs away without issue!) but it does cause windows to BSOD, probably due to a memory overrun of some sort on the CP2102 VCP driver.
+			time.sleep(0.01)	#note: removing this delay doesn't break the software per-se (the algorithm to frame and decode chugs away without issue!) but it does cause windows to BSOD, probably due to a memory overrun of some sort on the CP2102 VCP driver.
 	except KeyboardInterrupt:
 		pass
 	

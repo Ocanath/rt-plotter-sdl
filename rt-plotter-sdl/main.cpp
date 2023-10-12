@@ -8,6 +8,7 @@ and may not be redistributed without written permission.*/
 #include <vector>
 #include "winserial.h"
 #include "PPP.h"
+#include "colors.h"
 
 #define PAYLOAD_SIZE 512
 #define UNSTUFFING_BUFFER_SIZE (PAYLOAD_SIZE * 2 + 2)
@@ -109,8 +110,6 @@ int main(int argc, char* args[])
 				SDL_SetRenderDrawColor(pRenderer, 10, 10, 10, 255);
 				SDL_RenderClear(pRenderer);
 
-				SDL_SetRenderDrawColor(pRenderer, 255, 255, 255, 255);
-
 
 
 				LPDWORD num_bytes_read = 0;
@@ -157,7 +156,10 @@ int main(int argc, char* args[])
 
 
 				for (int line = 0; line < fpoints_lines.size(); line++)
-				{	//retrieve and load all available datapoints here
+				{	
+					SDL_SetRenderDrawColor(pRenderer, template_colors[line % NUM_COLORS].r, template_colors[line % NUM_COLORS].g, template_colors[line % NUM_COLORS].b, 255);
+
+					//retrieve and load all available datapoints here
 					std::vector<fpoint_t>* pFpoints = &fpoints_lines[line];
 
 					/*Parsing and loading done HERE.

@@ -145,11 +145,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="colors.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PPP.cpp" />
     <ClCompile Include="winserial.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="colors.h" />
     <ClInclude Include="PPP.h" />
     <ClInclude Include="winserial.h" />
   </ItemGroup>
