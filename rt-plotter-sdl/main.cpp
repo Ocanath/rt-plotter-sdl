@@ -68,7 +68,8 @@ int main(int argc, char* args[])
 			int inc = 0;
 			const int dbufsize = SCREEN_WIDTH;
 			std::vector<SDL_Point> points(dbufsize);
-			std::vector<fpoint_t> fpoints(dbufsize);
+			const int numlines = 3;
+			std::vector<std::vector<fpoint_t>> fpoints_lines(numlines, std::vector<fpoint_t>(dbufsize) );
 
 
 			float xscale = 0.f;
@@ -86,21 +87,28 @@ int main(int argc, char* args[])
 
 				SDL_SetRenderDrawColor(pRenderer, 255, 255, 255, 255);
 
-				float x = t;
-				float y = sin((double)(t * 2.f * 3.141595f * 1.f));
-				std::rotate(fpoints.begin(), fpoints.begin() + 1, fpoints.end());
-				fpoints[dbufsize - 1].x = t;
-				fpoints[dbufsize - 1].y = y;
-				xscale = ((float)SCREEN_WIDTH)/(fpoints[dbufsize - 1].x - fpoints[0].x);
+				
+				for (int line = 0; line < fpoints_lines.size(); line++)
+				{	//retrieve and load all available datapoints here
+					std::vector<fpoint_t>* pFpoints = &fpoints_lines[line];
 
-				for (int i = 0; i < points.size(); i++)
-				{
-					points[i].x = (int)( (fpoints[i].x - fpoints[0].x) * xscale);
-					points[i].y = (int)(fpoints[i].y * yscale) + SCREEN_HEIGHT / 2;
+					float x = t;
+					float y = sin((double)(t * 2.f * 3.141595f * 1.f));
+
+					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
+					(*pFpoints)[dbufsize - 1].x = t;
+					(*pFpoints)[dbufsize - 1].y = y;
+					xscale = ((float)SCREEN_WIDTH) / ((*pFpoints)[dbufsize - 1].x - (*pFpoints)[0].x);
+
+
+					for (int i = 0; i < points.size(); i++)
+					{
+						points[i].x = (int)(((*pFpoints)[i].x - (*pFpoints)[0].x) * xscale);
+						points[i].y = (int)((*pFpoints)[i].y * yscale) + (line+1)*(float)SCREEN_HEIGHT / (float)(fpoints_lines.size()+1) ;
+					}
+
+					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);
 				}
-
-				SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);
-
 				SDL_RenderPresent(pRenderer);
 				
 				SDL_PollEvent(&e);
