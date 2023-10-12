@@ -6,6 +6,7 @@ and may not be redistributed without written permission.*/
 #include <stdio.h>
 #include <math.h>
 #include <vector>
+#include "winserial.h"
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 1040;
@@ -19,6 +20,27 @@ typedef struct fpoint_t
 
 int main(int argc, char* args[])
 {
+	
+	HANDLE serialport;
+	char namestr[16] = { 0 };
+	uint8_t found = 0;
+	for (int i = 0; i < 255; i++)
+	{
+		int rl = sprintf_s(namestr, "\\\\.\\COM%d", i);
+		int rc = connect_to_usb_serial(&serialport, namestr, 460800);
+		if (rc != 0)
+		{
+			printf("Connected to COM port %s successfully\r\n", namestr);
+			found = 1;
+			break;
+		}
+	}
+	if (found == 0)
+	{
+		printf("No COM ports found\r\n");
+	}
+
+
 
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
@@ -48,16 +70,16 @@ int main(int argc, char* args[])
 			std::vector<SDL_Point> points(dbufsize);
 			std::vector<fpoint_t> fpoints(dbufsize);
 
-			float xscale = (float)SCREEN_WIDTH / 10.0f; //screen width occupies 640pixels for 1 second
+
+			float xscale = 0.f;
 			float yscale = 100 / 1.f;	//100 pixels = 1 input unit
 
 			uint64_t start_tick = SDL_GetTicks64();
-			int xsub = 0;
+			
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
 				float t = ((float)tick) * 0.001f;
-
 
 				SDL_SetRenderDrawColor(pRenderer, 10, 10, 10, 255);
 				SDL_RenderClear(pRenderer);
