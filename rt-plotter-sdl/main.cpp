@@ -16,7 +16,16 @@ and may not be redistributed without written permission.*/
 const int SCREEN_WIDTH = 1040;
 const int SCREEN_HEIGHT = 480;
 
-
+typedef union u32_fmt_t
+{
+	uint32_t u32;
+	int32_t i32;
+	float f32;
+	int16_t i16[sizeof(uint32_t) / sizeof(int16_t)];
+	uint16_t ui16[sizeof(uint32_t) / sizeof(uint16_t)];
+	int8_t i8[sizeof(uint32_t) / sizeof(int8_t)];
+	uint8_t ui8[sizeof(uint32_t) / sizeof(uint8_t)];
+}u32_fmt_t;
 
 typedef struct fpoint_t
 {
@@ -27,6 +36,7 @@ typedef struct fpoint_t
 static int gl_ppp_bidx = 0;
 static uint8_t gl_ppp_payload_buffer[PAYLOAD_SIZE] = { 0 };	//buffer
 static uint8_t gl_ppp_unstuffing_buffer[UNSTUFFING_BUFFER_SIZE] = { 0 };
+static uint8_t gl_ser_readbuf[512] = { 0 };
 
 
 int main(int argc, char* args[])
@@ -51,7 +61,6 @@ int main(int argc, char* args[])
 		printf("No COM ports found\r\n");
 	}
 
-	uint8_t ser_readbuf[512] = { 0 };
 	
 
 	//The window we'll be rendering to
@@ -103,10 +112,10 @@ int main(int argc, char* args[])
 
 
 				LPDWORD num_bytes_read = 0;
-				int rc = ReadFile(serialport, ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
+				int rc = ReadFile(serialport, gl_ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
 				for (int i = 0; i < (int)num_bytes_read; i++)
 				{
-					uint8_t new_byte = ser_readbuf[i];
+					uint8_t new_byte = gl_ser_readbuf[i];
 					int pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
 					if (pld_size > 0)
 					{
@@ -114,7 +123,17 @@ int main(int argc, char* args[])
 						{
 							gl_ppp_payload_buffer[clearidx] = 0;
 						}
-						printf("%s\r\n", gl_ppp_payload_buffer);
+						//printf("%s\r\n", gl_ppp_payload_buffer);
+						//printf("recieved %d bytes\r\n", pld_size);
+						int wordsize = pld_size / sizeof(float);
+						std::vector<u32_fmt_t> vals(wordsize);
+						memcpy((uint32_t*)(&vals[0]), &gl_ppp_payload_buffer, pld_size);
+
+						for (int word_idx = 0; word_idx < wordsize; word_idx++)
+						{
+							printf("%f ", vals[word_idx].f32);
+						}
+						printf("\r\n");
 					}
 				}
 
