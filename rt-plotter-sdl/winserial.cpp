@@ -19,5 +19,15 @@ int connect_to_usb_serial(HANDLE* serial_handle, const char* com_port_name, unsi
 	int rc = 0;
 	rc |= SetCommState((*serial_handle), &serial_params);
 
+	if (rc != 0)
+	{
+		COMMTIMEOUTS timeouts = { 0 };
+		timeouts.ReadIntervalTimeout = MAXDWORD;
+		timeouts.ReadTotalTimeoutConstant = 0;
+		timeouts.ReadTotalTimeoutMultiplier = 0;
+		timeouts.WriteTotalTimeoutConstant = 0;
+		timeouts.WriteTotalTimeoutMultiplier = 0;
+		SetCommTimeouts((*serial_handle), &timeouts);
+	}
 	return rc;
 }

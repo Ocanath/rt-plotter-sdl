@@ -146,9 +146,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PPP.cpp" />
     <ClCompile Include="winserial.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="PPP.h" />
     <ClInclude Include="winserial.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

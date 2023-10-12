@@ -7,16 +7,27 @@ and may not be redistributed without written permission.*/
 #include <math.h>
 #include <vector>
 #include "winserial.h"
+#include "PPP.h"
+
+#define PAYLOAD_SIZE 512
+#define UNSTUFFING_BUFFER_SIZE (PAYLOAD_SIZE * 2 + 2)
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 1040;
 const int SCREEN_HEIGHT = 480;
+
+
 
 typedef struct fpoint_t
 {
 	float x;
 	float y;
 }fpoint_t;
+
+static int gl_ppp_bidx = 0;
+static uint8_t gl_ppp_payload_buffer[PAYLOAD_SIZE] = { 0 };	//buffer
+static uint8_t gl_ppp_unstuffing_buffer[UNSTUFFING_BUFFER_SIZE] = { 0 };
+
 
 int main(int argc, char* args[])
 {
@@ -40,6 +51,18 @@ int main(int argc, char* args[])
 		printf("No COM ports found\r\n");
 	}
 
+	uint8_t ser_readbuf[512] = { 0 };
+	
+	while (1)
+	{
+		LPDWORD num_bytes_read = 0;
+		int rc = ReadFile(serialport, ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
+		for (int i = 0; i < (int)num_bytes_read; i++)
+		{
+			
+			printf("read %d bytes: %c\r\n", num_bytes_read, ser_readbuf[i]);
+		}
+	}
 
 
 	//The window we'll be rendering to
@@ -76,7 +99,8 @@ int main(int argc, char* args[])
 			float yscale = 100 / 1.f;	//100 pixels = 1 input unit
 
 			uint64_t start_tick = SDL_GetTicks64();
-			
+			uint8_t serialbuffer[10] = { 0 };
+
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -87,7 +111,18 @@ int main(int argc, char* args[])
 
 				SDL_SetRenderDrawColor(pRenderer, 255, 255, 255, 255);
 
-				
+				int recievedsize = 0;
+				for(int i = 0; i < recievedsize; i++)
+				{
+					uint8_t new_byte = serialbuffer[i];
+					int pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
+					if (pld_size > 0)
+					{
+						printf("%s\r\n", gl_ppp_payload_buffer);
+					}
+				}
+
+
 				for (int line = 0; line < fpoints_lines.size(); line++)
 				{	//retrieve and load all available datapoints here
 					std::vector<fpoint_t>* pFpoints = &fpoints_lines[line];
