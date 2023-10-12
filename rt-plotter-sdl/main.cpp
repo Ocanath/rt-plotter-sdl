@@ -53,25 +53,6 @@ int main(int argc, char* args[])
 
 	uint8_t ser_readbuf[512] = { 0 };
 	
-	while (1)
-	{
-		LPDWORD num_bytes_read = 0;
-		int rc = ReadFile(serialport, ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
-		for (int i = 0; i < (int)num_bytes_read; i++)
-		{
-			uint8_t new_byte = ser_readbuf[i];
-			int pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
-			if (pld_size > 0)
-			{
-				for (int clearidx = pld_size; clearidx < PAYLOAD_SIZE; clearidx++)
-				{
-					gl_ppp_payload_buffer[clearidx] = 0;
-				}
-				printf("%s\r\n", gl_ppp_payload_buffer);
-			}
-		}
-	}
-
 
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
@@ -119,6 +100,23 @@ int main(int argc, char* args[])
 
 				SDL_SetRenderDrawColor(pRenderer, 255, 255, 255, 255);
 
+
+
+				LPDWORD num_bytes_read = 0;
+				int rc = ReadFile(serialport, ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
+				for (int i = 0; i < (int)num_bytes_read; i++)
+				{
+					uint8_t new_byte = ser_readbuf[i];
+					int pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
+					if (pld_size > 0)
+					{
+						for (int clearidx = pld_size; clearidx < PAYLOAD_SIZE; clearidx++)
+						{
+							gl_ppp_payload_buffer[clearidx] = 0;
+						}
+						printf("%s\r\n", gl_ppp_payload_buffer);
+					}
+				}
 
 
 				for (int line = 0; line < fpoints_lines.size(); line++)
