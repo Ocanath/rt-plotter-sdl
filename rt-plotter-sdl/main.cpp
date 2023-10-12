@@ -10,6 +10,8 @@ and may not be redistributed without written permission.*/
 #include "PPP.h"
 #include "colors.h"
 #include "args-parsing.h"
+#include <SDL_ttf.h>
+
 
 #define PAYLOAD_SIZE 512
 #define UNSTUFFING_BUFFER_SIZE (PAYLOAD_SIZE * 2 + 2)
