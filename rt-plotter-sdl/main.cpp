@@ -48,7 +48,7 @@ int main(int argc, char* args[])
 	for (int i = 0; i < 255; i++)
 	{
 		int rl = sprintf_s(namestr, "\\\\.\\COM%d", i);
-		int rc = connect_to_usb_serial(&serialport, namestr, 460800);
+		int rc = connect_to_usb_serial(&serialport, namestr, 921600);
 		if (rc != 0)
 		{
 			printf("Connected to COM port %s successfully\r\n", namestr);
@@ -131,11 +131,12 @@ int main(int argc, char* args[])
 							fpoints_lines.resize(numlines, std::vector<fpoint_t>(dbufsize));
 						}
 
-						for (int word_idx = 0; word_idx < wordsize; word_idx++)
-						{
-							printf("%f ", fmt_buffer[word_idx].f32);
-						}
-						printf("\r\n");
+						//print the data
+						//for (int word_idx = 0; word_idx < wordsize; word_idx++)
+						//{
+						//	printf("%f ", fmt_buffer[word_idx].f32);
+						//}
+						//printf("\r\n");
 					}
 				}
 

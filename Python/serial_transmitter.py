@@ -50,7 +50,7 @@ if __name__ == "__main__":
 		try:
 			ser = []
 			if( (args.CP210x_only == False) or  (args.CP210x_only == True and (p[1].find('CP210x') != -1) or p[1].find('USB Serial Port') != -1) ):
-				ser = (serial.Serial(p[0],'460800', timeout = 1))
+				ser = (serial.Serial(p[0],'921600', timeout = 1))
 				slist.append(ser)
 				print ("connected!", p)
 				break
@@ -64,16 +64,16 @@ if __name__ == "__main__":
 	start_time = time.time()
 	try:
 		iteration = 0
-		vals = np.zeros(2)
+		vals = np.zeros(3)
 		
 		while(True):
 			
 			"""
 				Create some reference values to pipe out
 			"""
-			t = time.time() - start_time			
+			t = time.time() - start_time					
 			for i in range(0,len(vals)):
-				vals[i] = np.sin(t*2*np.pi*3 + i)
+				vals[i] = 1.0*np.sin(t*2*np.pi*3 + 2*np.pi/len(vals)*i)
 
 
 			"""
