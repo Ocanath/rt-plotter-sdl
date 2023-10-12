@@ -5,13 +5,21 @@ and may not be redistributed without written permission.*/
 #include <SDL.h>
 #include <stdio.h>
 #include <math.h>
+#include <vector>
 
 //Screen dimension constants
-const int SCREEN_WIDTH = 640;
+const int SCREEN_WIDTH = 1040;
 const int SCREEN_HEIGHT = 480;
+
+typedef struct fpoint_t
+{
+	float x;
+	float y;
+}fpoint_t;
 
 int main(int argc, char* args[])
 {
+
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
 
@@ -36,35 +44,43 @@ int main(int argc, char* args[])
 			SDL_Event e; 
 			bool quit = false; 
 			int inc = 0;
-			const int dbufsize = 1000;
-			SDL_Point points[dbufsize];
+			const int dbufsize = SCREEN_WIDTH;
+			std::vector<SDL_Point> points(dbufsize);
+			std::vector<fpoint_t> fpoints(dbufsize);
+
+			float xscale = (float)SCREEN_WIDTH / 10.0f; //screen width occupies 640pixels for 1 second
+			float yscale = 100 / 1.f;	//100 pixels = 1 input unit
+
+			uint64_t start_tick = SDL_GetTicks64();
+			int xsub = 0;
 			while (quit == false) 
 			{
-				uint64_t tick = SDL_GetTicks64();
+				uint64_t tick = SDL_GetTicks64() - start_tick;
 				float t = ((float)tick) * 0.001f;
 
 
 				SDL_SetRenderDrawColor(pRenderer, 10, 10, 10, 255);
 				SDL_RenderClear(pRenderer);
 
-
-
 				SDL_SetRenderDrawColor(pRenderer, 255, 255, 255, 255);
 
+				float x = t;
+				float y = sin((double)(t * 2.f * 3.141595f * 1.f));
+				std::rotate(fpoints.begin(), fpoints.begin() + 1, fpoints.end());
+				fpoints[dbufsize - 1].x = t;
+				fpoints[dbufsize - 1].y = y;
+				xscale = ((float)SCREEN_WIDTH)/(fpoints[dbufsize - 1].x - fpoints[0].x);
 
-				//float freq = (sin(t) * 0.5f + 0.5f)*0.01f + 0.01f;
-				float freq = 0.02f;
-				float phase = t;
-				for (int i = 0; i < dbufsize; i++)
+				for (int i = 0; i < points.size(); i++)
 				{
-					points[i].x = i;
-					points[i].y = (int)(sin( ((double)i)*freq + phase)*100.f+SCREEN_HEIGHT/2);
+					points[i].x = (int)( (fpoints[i].x - fpoints[0].x) * xscale);
+					points[i].y = (int)(fpoints[i].y * yscale) + SCREEN_HEIGHT / 2;
 				}
 
-				SDL_RenderDrawLines(pRenderer, points, dbufsize);
+				SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);
 
 				SDL_RenderPresent(pRenderer);
-
+				
 				SDL_PollEvent(&e);
 				{ 
 					if (e.type == SDL_QUIT) 
@@ -74,8 +90,6 @@ int main(int argc, char* args[])
 			SDL_DestroyRenderer(pRenderer);
 		}
 	}
-
-	
 
 	//Destroy window
 	SDL_DestroyWindow(window);
