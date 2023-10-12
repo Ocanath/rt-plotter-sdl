@@ -87,7 +87,7 @@ int main(int argc, char* args[])
 			SDL_Event e; 
 			bool quit = false; 
 			int inc = 0;
-			const int dbufsize = SCREEN_WIDTH;
+			const int dbufsize = SCREEN_WIDTH*3;
 			std::vector<SDL_Point> points(dbufsize);
 			const int numlines = 3;
 			std::vector<std::vector<fpoint_t>> fpoints_lines(numlines, std::vector<fpoint_t>(dbufsize) );
@@ -98,6 +98,8 @@ int main(int argc, char* args[])
 
 			uint64_t start_tick = SDL_GetTicks64();
 			uint8_t serialbuffer[10] = { 0 };
+			int pld_size = 0;
+			u32_fmt_t* fmt_buffer = (u32_fmt_t*)(&gl_ppp_payload_buffer[0]);
 
 			while (quit == false) 
 			{
@@ -112,26 +114,21 @@ int main(int argc, char* args[])
 
 
 				LPDWORD num_bytes_read = 0;
+				pld_size = 0;
 				int rc = ReadFile(serialport, gl_ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
 				for (int i = 0; i < (int)num_bytes_read; i++)
 				{
 					uint8_t new_byte = gl_ser_readbuf[i];
-					int pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
+					pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
 					if (pld_size > 0)
 					{
-						for (int clearidx = pld_size; clearidx < PAYLOAD_SIZE; clearidx++)
-						{
-							gl_ppp_payload_buffer[clearidx] = 0;
-						}
 						//printf("%s\r\n", gl_ppp_payload_buffer);
 						//printf("recieved %d bytes\r\n", pld_size);
 						int wordsize = pld_size / sizeof(float);
-						std::vector<u32_fmt_t> vals(wordsize);
-						memcpy((uint32_t*)(&vals[0]), &gl_ppp_payload_buffer, pld_size);
 
 						for (int word_idx = 0; word_idx < wordsize; word_idx++)
 						{
-							printf("%f ", vals[word_idx].f32);
+							printf("%f ", fmt_buffer[word_idx].f32);
 						}
 						printf("\r\n");
 					}
@@ -142,11 +139,11 @@ int main(int argc, char* args[])
 				{	//retrieve and load all available datapoints here
 					std::vector<fpoint_t>* pFpoints = &fpoints_lines[line];
 
-					float x = t;
-					float y = sin((double)(t * 2.f * 3.141595f * 1.f));
+					float x = fmt_buffer[3].f32;
+					float y = fmt_buffer[line].f32;
 
 					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
-					(*pFpoints)[dbufsize - 1].x = t;
+					(*pFpoints)[dbufsize - 1].x = x;
 					(*pFpoints)[dbufsize - 1].y = y;
 					xscale = ((float)SCREEN_WIDTH) / ((*pFpoints)[dbufsize - 1].x - (*pFpoints)[0].x);
 

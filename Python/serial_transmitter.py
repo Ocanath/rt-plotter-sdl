@@ -73,7 +73,7 @@ if __name__ == "__main__":
 			"""
 			t = time.time() - start_time			
 			for i in range(0,len(vals)):
-				vals[i] = np.sin(t + i)
+				vals[i] = np.sin(t*2*np.pi*3 + i)
 
 
 			"""
