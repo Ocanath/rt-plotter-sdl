@@ -15,9 +15,6 @@ int main(int argc, char* args[])
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
 
-	//The surface contained by the window
-	SDL_Surface* screenSurface = NULL;
-
 	//Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
@@ -33,39 +30,40 @@ int main(int argc, char* args[])
 		}
 		else
 		{
-			//Get window surface
-			screenSurface = SDL_GetWindowSurface(window);
 			SDL_Renderer* pRenderer = SDL_CreateRenderer(window, -1, 0);
 			SDL_SetRenderDrawColor(pRenderer, 255, 255, 255, 255);
 
-			//Fill the surface white
-			SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 10, 10, 10));
-
-			//Update the surface
-			SDL_UpdateWindowSurface(window);
-
-			//Hack to get window to stay up
 			SDL_Event e; 
 			bool quit = false; 
 			int inc = 0;
+			const int dbufsize = 1000;
+			SDL_Point points[dbufsize];
 			while (quit == false) 
 			{
-				SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 10, 10, 10));
-
 				uint64_t tick = SDL_GetTicks64();
 				float t = ((float)tick) * 0.001f;
 
-				float ft = t * 10;
 
-				SDL_Rect rectangule;
-				rectangule.x = SCREEN_WIDTH / 2;
-				rectangule.y = SCREEN_HEIGHT / 2;
-				rectangule.w = (int)( (sin(ft)*0.5f + 0.5f) * 100)+50;
-				rectangule.h = (int)( (cos(ft)*0.5f + 0.5f) * 100)+50;
-				SDL_FillRect(screenSurface, &rectangule, SDL_MapRGB(screenSurface->format, 255, 255, 255));
-				SDL_UpdateWindowSurface(window);
+				SDL_SetRenderDrawColor(pRenderer, 10, 10, 10, 255);
+				SDL_RenderClear(pRenderer);
 
 
+
+				SDL_SetRenderDrawColor(pRenderer, 255, 255, 255, 255);
+
+
+				//float freq = (sin(t) * 0.5f + 0.5f)*0.01f + 0.01f;
+				float freq = 0.02f;
+				float phase = t;
+				for (int i = 0; i < dbufsize; i++)
+				{
+					points[i].x = i;
+					points[i].y = (int)(sin( ((double)i)*freq + phase)*100.f+SCREEN_HEIGHT/2);
+				}
+
+				SDL_RenderDrawLines(pRenderer, points, dbufsize);
+
+				SDL_RenderPresent(pRenderer);
 
 				SDL_PollEvent(&e);
 				{ 
@@ -73,8 +71,11 @@ int main(int argc, char* args[])
 						quit = true; 
 				} 
 			}
+			SDL_DestroyRenderer(pRenderer);
 		}
 	}
+
+	
 
 	//Destroy window
 	SDL_DestroyWindow(window);
