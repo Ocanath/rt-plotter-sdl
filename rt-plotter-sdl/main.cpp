@@ -13,8 +13,8 @@ and may not be redistributed without written permission.*/
 #define UNSTUFFING_BUFFER_SIZE (PAYLOAD_SIZE * 2 + 2)
 
 //Screen dimension constants
-const int SCREEN_WIDTH = 1040;
-const int SCREEN_HEIGHT = 480;
+const int SCREEN_WIDTH = 1200;
+const int SCREEN_HEIGHT = 800;
 
 typedef union u32_fmt_t
 {
@@ -160,11 +160,15 @@ int main(int argc, char* args[])
 					(*pFpoints)[dbufsize - 1].y = y;
 					xscale = ((float)SCREEN_WIDTH) / ((*pFpoints)[dbufsize - 1].x - (*pFpoints)[0].x);
 
+					float div_pixel_size = (float)SCREEN_HEIGHT / ((float)fpoints_lines.size());
 
 					for (int i = 0; i < points.size(); i++)
-					{
+					{	
+						float div_center = (div_pixel_size * line) + (div_pixel_size * .5f);	//calculate the center point of the line we're drawing on screen
+
+
 						points[i].x = (int)(((*pFpoints)[i].x - (*pFpoints)[0].x) * xscale);
-						points[i].y = (int)((*pFpoints)[i].y * yscale) + (line+1)*(float)SCREEN_HEIGHT / (float)(fpoints_lines.size()+1) ;
+						points[i].y = (int)((*pFpoints)[i].y * yscale) + div_center;
 					}
 
 					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);
