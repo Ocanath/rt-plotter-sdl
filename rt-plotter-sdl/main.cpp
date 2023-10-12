@@ -89,7 +89,7 @@ int main(int argc, char* args[])
 			int inc = 0;
 			const int dbufsize = SCREEN_WIDTH*3;
 			std::vector<SDL_Point> points(dbufsize);
-			const int numlines = 3;
+			const int numlines = 1;
 			std::vector<std::vector<fpoint_t>> fpoints_lines(numlines, std::vector<fpoint_t>(dbufsize) );
 
 
@@ -125,6 +125,11 @@ int main(int argc, char* args[])
 						//printf("%s\r\n", gl_ppp_payload_buffer);
 						//printf("recieved %d bytes\r\n", pld_size);
 						int wordsize = pld_size / sizeof(float);
+						int numlines = (wordsize - 1);
+						if (fpoints_lines.size() != numlines)
+						{
+							fpoints_lines.resize(numlines, std::vector<fpoint_t>(dbufsize));
+						}
 
 						for (int word_idx = 0; word_idx < wordsize; word_idx++)
 						{
@@ -139,7 +144,7 @@ int main(int argc, char* args[])
 				{	//retrieve and load all available datapoints here
 					std::vector<fpoint_t>* pFpoints = &fpoints_lines[line];
 
-					float x = fmt_buffer[3].f32;
+					float x = fmt_buffer[fpoints_lines.size()].f32;
 					float y = fmt_buffer[line].f32;
 
 					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
