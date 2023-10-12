@@ -64,7 +64,7 @@ if __name__ == "__main__":
 	start_time = time.time()
 	try:
 		iteration = 0
-		vals = np.zeros(3)
+		vals = np.zeros(6)
 		
 		while(True):
 			

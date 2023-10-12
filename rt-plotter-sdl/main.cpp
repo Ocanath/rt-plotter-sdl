@@ -114,34 +114,47 @@ int main(int argc, char* args[])
 
 
 				LPDWORD num_bytes_read = 0;
-				do
+				pld_size = 0;
+				int rc = ReadFile(serialport, gl_ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
+				for (int i = 0; i < (int)num_bytes_read; i++)
 				{
-					pld_size = 0;
-					int rc = ReadFile(serialport, gl_ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
-					for (int i = 0; i < (int)num_bytes_read; i++)
+					uint8_t new_byte = gl_ser_readbuf[i];
+					pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
+					if (pld_size > 0)
 					{
-						uint8_t new_byte = gl_ser_readbuf[i];
-						pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
-						if (pld_size > 0)
+						//printf("%s\r\n", gl_ppp_payload_buffer);
+						//printf("recieved %d bytes\r\n", pld_size);
+						int wordsize = pld_size / sizeof(float);
+						int numlines = (wordsize - 1);
+						if (fpoints_lines.size() != numlines)
 						{
-							//printf("%s\r\n", gl_ppp_payload_buffer);
-							//printf("recieved %d bytes\r\n", pld_size);
-							int wordsize = pld_size / sizeof(float);
-							int numlines = (wordsize - 1);
-							if (fpoints_lines.size() != numlines)
-							{
-								fpoints_lines.resize(numlines, std::vector<fpoint_t>(dbufsize));
-							}
-
-							//print the data
-							//for (int word_idx = 0; word_idx < wordsize; word_idx++)
-							//{
-							//	printf("%f ", fmt_buffer[word_idx].f32);
-							//}
-							//printf("\r\n");
+							fpoints_lines.resize(numlines, std::vector<fpoint_t>(dbufsize));
 						}
+
+						//print the data
+						//for (int word_idx = 0; word_idx < wordsize; word_idx++)
+						//{
+						//	printf("%f ", fmt_buffer[word_idx].f32);
+						//}
+						//printf("\r\n");
 					}
-				} while (num_bytes_read == 0);
+				}
+
+				{	//obtain a new xscale.
+					float mintime = 10000000000000.f;
+					float maxtime = 0.f;
+					for (int line = 0; line < fpoints_lines.size(); line++)
+					{
+						float max_candidate = fpoints_lines[line][dbufsize - 1].x;
+						float min_candidate = fpoints_lines[line][0].x;
+						if (max_candidate > maxtime)
+							maxtime = max_candidate;
+						if (min_candidate < mintime)
+							mintime = min_candidate;
+					}
+					xscale = ((float)SCREEN_WIDTH) / (maxtime - mintime);
+				}
+
 
 				for (int line = 0; line < fpoints_lines.size(); line++)
 				{	//retrieve and load all available datapoints here
@@ -158,7 +171,7 @@ int main(int argc, char* args[])
 					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
 					(*pFpoints)[dbufsize - 1].x = x;
 					(*pFpoints)[dbufsize - 1].y = y;
-					xscale = ((float)SCREEN_WIDTH) / ((*pFpoints)[dbufsize - 1].x - (*pFpoints)[0].x);
+
 
 					float div_pixel_size = (float)SCREEN_HEIGHT / ((float)fpoints_lines.size());
 
@@ -190,6 +203,8 @@ int main(int argc, char* args[])
 
 	//Quit SDL subsystems
 	SDL_Quit();
+
+	//close serial port
 	CloseHandle(serialport);
 	return 0;
 }
