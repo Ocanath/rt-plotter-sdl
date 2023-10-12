@@ -9,6 +9,7 @@ and may not be redistributed without written permission.*/
 #include "winserial.h"
 #include "PPP.h"
 #include "colors.h"
+#include "args-parsing.h"
 
 #define PAYLOAD_SIZE 512
 #define UNSTUFFING_BUFFER_SIZE (PAYLOAD_SIZE * 2 + 2)
@@ -16,17 +17,6 @@ and may not be redistributed without written permission.*/
 //Screen dimension constants
 const int SCREEN_WIDTH = 1200;
 const int SCREEN_HEIGHT = 800;
-
-typedef union u32_fmt_t
-{
-	uint32_t u32;
-	int32_t i32;
-	float f32;
-	int16_t i16[sizeof(uint32_t) / sizeof(int16_t)];
-	uint16_t ui16[sizeof(uint32_t) / sizeof(uint16_t)];
-	int8_t i8[sizeof(uint32_t) / sizeof(int8_t)];
-	uint8_t ui8[sizeof(uint32_t) / sizeof(uint8_t)];
-}u32_fmt_t;
 
 typedef struct fpoint_t
 {
@@ -42,14 +32,15 @@ static uint8_t gl_ser_readbuf[512] = { 0 };
 
 int main(int argc, char* args[])
 {
-	
+	parse_args(argc, args, &gl_options);
+
 	HANDLE serialport;
 	char namestr[16] = { 0 };
 	uint8_t found = 0;
 	for (int i = 0; i < 255; i++)
 	{
 		int rl = sprintf_s(namestr, "\\\\.\\COM%d", i);
-		int rc = connect_to_usb_serial(&serialport, namestr, 921600);
+		int rc = connect_to_usb_serial(&serialport, namestr, gl_options.baud_rate);
 		if (rc != 0)
 		{
 			printf("Connected to COM port %s successfully\r\n", namestr);
@@ -62,7 +53,6 @@ int main(int argc, char* args[])
 		printf("No COM ports found\r\n");
 	}
 
-	
 
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
@@ -95,7 +85,6 @@ int main(int argc, char* args[])
 
 
 			float xscale = 0.f;
-			float yscale = 100 / 1.f;	//100 pixels = 1 input unit
 
 			uint64_t start_tick = SDL_GetTicks64();
 			uint8_t serialbuffer[10] = { 0 };
@@ -175,15 +164,24 @@ int main(int argc, char* args[])
 					(*pFpoints)[dbufsize - 1].y = y;
 
 
-					float div_pixel_size = (float)SCREEN_HEIGHT / ((float)fpoints_lines.size());
+					float div_pixel_size = 0;
+					float div_center = 0;
+					if(gl_options.spread_lines)
+						div_pixel_size = (float)SCREEN_HEIGHT / ((float)fpoints_lines.size());
+					else
+					{
+						div_center = (float)SCREEN_HEIGHT / 2;
+					}
 
 					for (int i = 0; i < points.size(); i++)
-					{	
-						float div_center = (div_pixel_size * line) + (div_pixel_size * .5f);	//calculate the center point of the line we're drawing on screen
-
+					{
+						if (gl_options.spread_lines)
+						{
+							div_center = (div_pixel_size * line) + (div_pixel_size * .5f);	//calculate the center point of the line we're drawing on screen
+						}
 
 						points[i].x = (int)(((*pFpoints)[i].x - (*pFpoints)[0].x) * xscale);
-						points[i].y = (int)((*pFpoints)[i].y * yscale) + div_center;
+						points[i].y = (int)((*pFpoints)[i].y * gl_options.yscale) + div_center;
 					}
 
 					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);

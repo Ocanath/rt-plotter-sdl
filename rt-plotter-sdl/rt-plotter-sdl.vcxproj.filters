@@ -27,6 +27,9 @@
     <ClCompile Include="colors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="args-parsing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="winserial.h">
@@ -36,6 +39,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="colors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="args-parsing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="u32_fmt_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
