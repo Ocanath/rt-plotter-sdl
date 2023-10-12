@@ -145,6 +145,11 @@ int main(int argc, char* args[])
 				{	//retrieve and load all available datapoints here
 					std::vector<fpoint_t>* pFpoints = &fpoints_lines[line];
 
+					/*Parsing and loading done HERE.
+					* if there is a more complex parsing function, implement it elsewhere and have it return X and Y.
+					* 
+					* It should be a function whose input is the unstuffed PPP buffer and whose output is x and y of each line contained in the buffer payload
+					*/
 					float x = fmt_buffer[fpoints_lines.size()].f32;
 					float y = fmt_buffer[line].f32;
 
