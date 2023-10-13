@@ -59,6 +59,15 @@ int main(int argc, char* args[])
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
 
+	if (TTF_Init() < 0)
+	{
+		printf("TTL init failed\r\n");
+	}
+	TTF_Font* font = TTF_OpenFont("ARIAL.TTF", 12);
+	SDL_Color txt_fgColor = { 255, 255, 255, 255 };
+	SDL_Color bgColor = { 10, 10, 10, 255 };
+	SDL_Surface* textSurface = TTF_RenderText_Shaded(font, "Text", txt_fgColor, bgColor);
+
 	//Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
@@ -98,7 +107,7 @@ int main(int argc, char* args[])
 				uint64_t tick = SDL_GetTicks64() - start_tick;
 				float t = ((float)tick) * 0.001f;
 
-				SDL_SetRenderDrawColor(pRenderer, 10, 10, 10, 255);
+				SDL_SetRenderDrawColor(pRenderer, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
 				SDL_RenderClear(pRenderer);
 
 
