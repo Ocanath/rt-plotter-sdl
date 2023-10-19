@@ -217,6 +217,15 @@ int main(int argc, char* args[])
 						quit = true; 
 				} 
 			}
+
+			//erase all the buffers
+			for (int i = 0; i < fpoints_lines.size(); i++)
+			{
+				fpoints_lines[i].clear();
+			}
+			fpoints_lines.clear();
+			points.clear();
+
 			SDL_DestroyRenderer(pRenderer);
 		}
 	}

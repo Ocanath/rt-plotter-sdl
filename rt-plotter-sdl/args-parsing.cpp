@@ -6,42 +6,8 @@
 cmd_options_t gl_options = {
 	0,	//spread lines
 	921600,	//baud rage
-	100.f
+	200.f
 };
-
-///*
-//* Get integer argument from a command line string
-//* INPUTS:
-//*	basearg: string which represents the base argument, pre value
-//* OUTPUTS:
-//* RETURNS:
-//*/
-//int get_int_arg(const char* basearg, char* arg, parse_types_t type, void * pValue)
-//{
-//	int blen = strlen(basearg);
-//	int arglen = strlen(arg);
-//	int res = strncmp(basearg, arg, blen);
-//	if (res == 0 && arglen > blen + 1)	//must have space and at least one additional character
-//	{
-//		if (arg[blen] == ' ')
-//		{
-//			char* tmp;
-//			if (type == INTEGER_TYPE)
-//			{
-//				int value = strtol(&arg[blen + 1], &tmp, 10);
-//				*((int*)pValue) = value;
-//			}
-//			else if (type == FLOAT32_TYPE)
-//			{
-//				float value = strtof(&arg[blen + 1], &tmp);
-//				*((float*)pValue) = value;
-//			}
-//			return 0;
-//		}
-//	}
-//	return -1;
-//}
-
 
 /*
 * Parse any and all arguments coming in
