@@ -32,6 +32,23 @@ static uint8_t gl_ppp_unstuffing_buffer[UNSTUFFING_BUFFER_SIZE] = { 0 };
 static uint8_t gl_ser_readbuf[512] = { 0 };
 static float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
 
+
+/*
+Generic hex checksum calculation.
+TODO: use this in the psyonic API
+*/
+uint32_t fletchers_checksum32(uint32_t* arr, int size)
+{
+	int32_t checksum = 0;
+	int32_t fchk = 0;
+	for (int i = 0; i < size; i++)
+	{
+		checksum += (int32_t)arr[i];
+		fchk += checksum;
+	}
+	return fchk;
+}
+
 /*
 * Inputs:
 *	input_buf: raw unstuffed data buffer
@@ -39,17 +56,23 @@ static float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
 *	parsed_data: floats, parsed from input buffer
 * Returns: number of parsed values
 */
-int parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data)
+void parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data, int * parsed_data_size)
 {
 	int16_t* pb16 = (int16_t*)(&input_buf[0]);
 	uint32_t* pb32 = (uint32_t*)(&input_buf[0]);
-	int i = 0;
-	for (i = 0; i < (payload_size - 4) / 2; i++)
+	uint32_t fchk = fletchers_checksum32(pb32, (payload_size/4) - 1);
+	if (pb32[payload_size/4 - 1] == fchk)
 	{
-		parsed_data[i] = ((float)pb16[i]) / 1024.0f;
+		int i = 0;
+		for (i = 0; i < (payload_size - 8) / 2; i++)
+		{
+			parsed_data[i] = ((float)pb16[i]) / 1024.0f;
+		}
+		parsed_data[i] = ((float)pb16[i]) / 1000.f;
+
+		//return (payload_size - 8) / 2 + 1;
+		*parsed_data_size = (payload_size - 8) / 2 + 1;
 	}
-	parsed_data[i] = ((float)pb16[i]) / 1000.f;
-	return (payload_size - 4) / 2 + 1;
 }
 
 
@@ -122,6 +145,11 @@ int main(int argc, char* args[])
 			uint8_t serialbuffer[10] = { 0 };
 			int pld_size = 0;
 
+
+			int wordsize = 0;
+			int previous_wordsize = 0;
+			int wordsize_match_count = 0;
+
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -141,11 +169,28 @@ int main(int argc, char* args[])
 					pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
 					if (pld_size > 0)
 					{
-						int wordsize = parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump);
-						int numlines = (wordsize - 1);
-						if (fpoints_lines.size() != numlines)
+						 parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+						
+						//obtain consecutive matching counts
+						if (wordsize == previous_wordsize && wordsize > 0)
 						{
-							fpoints_lines.resize(numlines, std::vector<fpoint_t>(dbufsize));
+							wordsize_match_count++;
+						}
+						else
+						{
+							wordsize_match_count = 0;
+						}
+						previous_wordsize = wordsize;
+						
+
+						//resize action
+						if(wordsize_match_count >= 100)
+						{
+							int numlines = (wordsize - 1);
+							if (fpoints_lines.size() != numlines)
+							{
+								fpoints_lines.resize(numlines, std::vector<fpoint_t>(dbufsize));
+							}
 						}
 					}
 				}
