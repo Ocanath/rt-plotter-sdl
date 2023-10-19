@@ -42,6 +42,7 @@ cmd_options_t gl_options = {
 //	return -1;
 //}
 
+
 /*
 * Parse any and all arguments coming in
 */

@@ -30,6 +30,27 @@ static int gl_ppp_bidx = 0;
 static uint8_t gl_ppp_payload_buffer[PAYLOAD_SIZE] = { 0 };	//buffer
 static uint8_t gl_ppp_unstuffing_buffer[UNSTUFFING_BUFFER_SIZE] = { 0 };
 static uint8_t gl_ser_readbuf[512] = { 0 };
+static float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
+
+/*
+* Inputs:
+*	input_buf: raw unstuffed data buffer
+* Outputs:
+*	parsed_data: floats, parsed from input buffer
+* Returns: number of parsed values
+*/
+int parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data)
+{
+	int16_t* pb16 = (int16_t*)(&input_buf[0]);
+	uint32_t* pb32 = (uint32_t*)(&input_buf[0]);
+	int i = 0;
+	for (i = 0; i < (payload_size - 4) / 2; i++)
+	{
+		parsed_data[i] = ((float)pb16[i]) / 1024.0f;
+	}
+	parsed_data[i] = ((float)pb16[i]) / 1000.f;
+	return (payload_size - 4) / 2 + 1;
+}
 
 
 int main(int argc, char* args[])
@@ -100,7 +121,6 @@ int main(int argc, char* args[])
 			uint64_t start_tick = SDL_GetTicks64();
 			uint8_t serialbuffer[10] = { 0 };
 			int pld_size = 0;
-			u32_fmt_t* fmt_buffer = (u32_fmt_t*)(&gl_ppp_payload_buffer[0]);
 
 			while (quit == false) 
 			{
@@ -121,37 +141,29 @@ int main(int argc, char* args[])
 					pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
 					if (pld_size > 0)
 					{
-						//printf("%s\r\n", gl_ppp_payload_buffer);
-						//printf("recieved %d bytes\r\n", pld_size);
-						int wordsize = pld_size / sizeof(float);
+						int wordsize = parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump);
 						int numlines = (wordsize - 1);
 						if (fpoints_lines.size() != numlines)
 						{
 							fpoints_lines.resize(numlines, std::vector<fpoint_t>(dbufsize));
 						}
-
-						//print the data
-						//for (int word_idx = 0; word_idx < wordsize; word_idx++)
-						//{
-						//	printf("%f ", fmt_buffer[word_idx].f32);
-						//}
-						//printf("\r\n");
 					}
 				}
 
 				{	//obtain a new xscale.
-					float mintime = 10000000000000.f;
-					float maxtime = 0.f;
-					for (int line = 0; line < fpoints_lines.size(); line++)
-					{
-						float max_candidate = fpoints_lines[line][dbufsize - 1].x;
-						float min_candidate = fpoints_lines[line][0].x;
-						if (max_candidate > maxtime)
-							maxtime = max_candidate;
-						if (min_candidate < mintime)
-							mintime = min_candidate;
-					}
-					xscale = ((float)SCREEN_WIDTH) / (maxtime - mintime);
+					//float mintime = 10000000000000.f;
+					//float maxtime = 0.f;
+					//for (int line = 0; line < fpoints_lines.size(); line++)
+					//{
+					//	float max_candidate = fpoints_lines[line][dbufsize - 1].x;
+					//	float min_candidate = fpoints_lines[line][0].x;
+					//	if (max_candidate > maxtime)
+					//		maxtime = max_candidate;
+					//	if (min_candidate < mintime)
+					//		mintime = min_candidate;
+					//}
+
+					xscale = ((float)SCREEN_WIDTH) / (fpoints_lines[0][dbufsize-1].x - fpoints_lines[0][0].x);
 				}
 
 
@@ -167,8 +179,8 @@ int main(int argc, char* args[])
 					* 
 					* It should be a function whose input is the unstuffed PPP buffer and whose output is x and y of each line contained in the buffer payload
 					*/
-					float x = fmt_buffer[fpoints_lines.size()].f32;
-					float y = fmt_buffer[line].f32;
+					float x = gl_valdump[fpoints_lines.size()];
+					float y = gl_valdump[line];
 
 					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
 					(*pFpoints)[dbufsize - 1].x = x;
