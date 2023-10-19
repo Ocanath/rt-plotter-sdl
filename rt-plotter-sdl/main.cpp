@@ -204,7 +204,7 @@ int main(int argc, char* args[])
 						}
 
 						points[i].x = (int)(((*pFpoints)[i].x - (*pFpoints)[0].x) * xscale);
-						points[i].y = (int)((*pFpoints)[i].y * gl_options.yscale) + div_center;
+						points[i].y = SCREEN_HEIGHT - ( (int)((*pFpoints)[i].y * gl_options.yscale) + div_center );
 					}
 
 					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);
