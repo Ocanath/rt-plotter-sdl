@@ -8,6 +8,7 @@ typedef struct cmd_options_t
 	uint8_t spread_lines;
 	int baud_rate;
 	float yscale;
+	uint8_t print_vals;
 }cmd_options_t;
 
 extern cmd_options_t gl_options;

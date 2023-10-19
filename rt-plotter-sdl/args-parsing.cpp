@@ -5,8 +5,9 @@
 
 cmd_options_t gl_options = {
 	0,	//spread lines
-	921600,	//baud rage
-	200.f
+	921600,	//baud rate
+	200.f,	//yscale,
+	0	//print values to console
 };
 
 /*
@@ -50,6 +51,10 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				{
 					printf("invalid yscale format\r\n");
 				}
+			}
+			if (strcmp("--printvals", argv[i]) == 0)
+			{
+				popts->print_vals = 1;
 			}
 		}
 	}
