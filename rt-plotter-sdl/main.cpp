@@ -64,13 +64,57 @@ void parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data, 
 	int i = 0;
 	for (i = 0; i < wordsize - 1; i++)
 	{
-		parsed_data[i] = ((float)pbi32[i])/(4096.f * 3.14159265f);
-		printf("%d ", pbi32[i]);
+		parsed_data[i] = ((float)pbi32[i])/4096.f;
+		//printf("%d ", pbi32[i]);
 	}
-	printf("\r\n");
+	//printf("\r\n");
 	parsed_data[i] = ((float)pbu32[i]) / 1000.f;
 
 	*parsed_data_size = wordsize;
+}
+
+
+
+void text_only(HANDLE*pSer)
+{
+	int pld_size = 0;
+	int previous_wordsize = 0;
+	int wordsize = 0;
+	int wordsize_match_count = 0;
+	while (1)
+	{
+		LPDWORD num_bytes_read = 0;
+		pld_size = 0;
+		int rc = ReadFile(*pSer, gl_ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
+		for (int i = 0; i < (int)num_bytes_read; i++)
+		{
+			uint8_t new_byte = gl_ser_readbuf[i];
+			pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
+			if (pld_size > 0)
+			{
+				parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+
+				//obtain consecutive matching counts
+				if (wordsize == previous_wordsize && wordsize > 0)
+				{
+					wordsize_match_count++;
+					if (gl_options.print_vals)
+					{
+						for (int fvidx = 0; fvidx < wordsize; fvidx++)
+						{
+							printf("%f, ", gl_valdump[fvidx]);
+						}
+						printf("\r\n");
+					}
+				}
+				else
+				{
+					wordsize_match_count = 0;
+				}
+				previous_wordsize = wordsize;
+			}
+		}
+	}
 }
 
 
@@ -97,6 +141,10 @@ int main(int argc, char* args[])
 		printf("No COM ports found\r\n");
 	}
 
+	if (gl_options.print_only)
+	{
+		text_only(&serialport);
+	}
 
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;

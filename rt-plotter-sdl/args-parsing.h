@@ -9,6 +9,7 @@ typedef struct cmd_options_t
 	int baud_rate;
 	float yscale;
 	uint8_t print_vals;
+	uint8_t print_only;
 }cmd_options_t;
 
 extern cmd_options_t gl_options;
