@@ -6,9 +6,10 @@
 cmd_options_t gl_options = {
 	0,	//spread lines
 	921600,	//baud rate
-	200.f,	//yscale,
+	400.f/4096.f,	//yscale,
 	0,	//print values to console
-	0 //print values to console ONLY (no actual plotting!)
+	0, //print values to console ONLY (no actual plotting!)
+	0, //print in parser flag active
 };
 
 /*
@@ -60,6 +61,10 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 			if (strcmp("--print-only", argv[i]) == 0)
 			{
 				popts->print_only = 1;
+			}
+			if (strcmp("--print-in-parser", argv[i]) == 0)
+			{
+				popts->print_in_parser = 1;
 			}
 		}
 	}

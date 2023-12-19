@@ -10,6 +10,7 @@ typedef struct cmd_options_t
 	float yscale;
 	uint8_t print_vals;
 	uint8_t print_only;
+	uint8_t print_in_parser;
 }cmd_options_t;
 
 extern cmd_options_t gl_options;

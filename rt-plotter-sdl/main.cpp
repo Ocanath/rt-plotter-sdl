@@ -64,7 +64,7 @@ void parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data, 
 	int i = 0;
 	for (i = 0; i < wordsize - 1; i++)
 	{
-		parsed_data[i] = ((float)pbi32[i])/4096.f;
+		parsed_data[i] = ((float)pbi32[i]);
 		//printf("%d ", pbi32[i]);
 	}
 	//printf("\r\n");
@@ -98,14 +98,18 @@ void text_only(HANDLE*pSer)
 				if (wordsize == previous_wordsize && wordsize > 0)
 				{
 					wordsize_match_count++;
-					if (gl_options.print_vals)
+					for (int fvidx = 0; fvidx < wordsize; fvidx++)
 					{
-						for (int fvidx = 0; fvidx < wordsize; fvidx++)
+						if (gl_options.print_in_parser == 0)
 						{
-							printf("%f, ", gl_valdump[fvidx]);
+							float val = gl_valdump[fvidx];
+							if (val >= 0)
+								printf("+%0.6f, ", val);
+							else
+								printf("%0.6f, ", val);
 						}
-						printf("\r\n");
 					}
+					printf("\r\n");
 				}
 				else
 				{
@@ -140,7 +144,6 @@ int main(int argc, char* args[])
 	{
 		printf("No COM ports found\r\n");
 	}
-
 	if (gl_options.print_only)
 	{
 		text_only(&serialport);
