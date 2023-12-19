@@ -62,13 +62,13 @@ void parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data, 
 	int32_t* pbi32 = (int32_t*)(&input_buf[0]);
 	int wordsize = payload_size / sizeof(uint32_t);
 	int i = 0;
-	for (i = 0; i < wordsize - 1; i++)
+	for (i = 0; i < wordsize; i++)
 	{
 		parsed_data[i] = ((float)pbi32[i]);
 		//printf("%d ", pbi32[i]);
 	}
 	//printf("\r\n");
-	parsed_data[i] = ((float)pbu32[i]) / 1000.f;
+	//parsed_data[i] = ((float)pbu32[i]) / 1000.f;
 
 	*parsed_data_size = wordsize;
 }
@@ -252,25 +252,11 @@ int main(int argc, char* args[])
 					}
 				}
 
-				{	//obtain a new xscale.
-					//float mintime = 10000000000000.f;
-					//float maxtime = 0.f;
-					//for (int line = 0; line < fpoints_lines.size(); line++)
-					//{
-					//	float max_candidate = fpoints_lines[line][dbufsize - 1].x;
-					//	float min_candidate = fpoints_lines[line][0].x;
-					//	if (max_candidate > maxtime)
-					//		maxtime = max_candidate;
-					//	if (min_candidate < mintime)
-					//		mintime = min_candidate;
-					//}
 
-					xscale = ((float)SCREEN_WIDTH) / (fpoints_lines[0][dbufsize-1].x - fpoints_lines[0][0].x);
-				}
-
-
-				for (int line = 0; line < fpoints_lines.size(); line++)
+				
 				{	
+					int line = 0;
+
 					SDL_SetRenderDrawColor(pRenderer, template_colors[line % NUM_COLORS].r, template_colors[line % NUM_COLORS].g, template_colors[line % NUM_COLORS].b, 255);
 
 					//retrieve and load all available datapoints here
@@ -281,8 +267,8 @@ int main(int argc, char* args[])
 					* 
 					* It should be a function whose input is the unstuffed PPP buffer and whose output is x and y of each line contained in the buffer payload
 					*/
-					float x = gl_valdump[fpoints_lines.size()];
-					float y = gl_valdump[line];
+					float x = gl_valdump[0];
+					float y = gl_valdump[1];
 
 					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
 					(*pFpoints)[dbufsize - 1].x = x;
@@ -305,8 +291,9 @@ int main(int argc, char* args[])
 							div_center = (div_pixel_size * line) + (div_pixel_size * .5f);	//calculate the center point of the line we're drawing on screen
 						}
 
-						points[i].x = (int)(((*pFpoints)[i].x - (*pFpoints)[0].x) * xscale);
-						points[i].y = SCREEN_HEIGHT - ( (int)((*pFpoints)[i].y * gl_options.yscale) + div_center );
+						xscale = ((float)SCREEN_HEIGHT) / 5000.f;
+						points[i].x = (int)(((*pFpoints)[i].x) * xscale);
+						points[i].y = ( (int)((*pFpoints)[i].y * xscale));
 					}
 
 					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);
