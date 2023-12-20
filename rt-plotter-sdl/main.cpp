@@ -253,10 +253,8 @@ int main(int argc, char* args[])
 				}
 
 
-				
+				for (int line = 0; line < fpoints_lines.size(); line++)
 				{	
-					int line = 0;
-
 					SDL_SetRenderDrawColor(pRenderer, template_colors[line % NUM_COLORS].r, template_colors[line % NUM_COLORS].g, template_colors[line % NUM_COLORS].b, 255);
 
 					//retrieve and load all available datapoints here
@@ -267,8 +265,8 @@ int main(int argc, char* args[])
 					* 
 					* It should be a function whose input is the unstuffed PPP buffer and whose output is x and y of each line contained in the buffer payload
 					*/
-					float x = gl_valdump[0];
-					float y = gl_valdump[1];
+					float x = gl_valdump[line % 2];
+					float y = gl_valdump[(line % 2) + 1];
 
 					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
 					(*pFpoints)[dbufsize - 1].x = x;
