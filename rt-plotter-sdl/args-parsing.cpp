@@ -10,6 +10,7 @@ cmd_options_t gl_options = {
 	0,	//print values to console
 	0, //print values to console ONLY (no actual plotting!)
 	0, //print in parser flag active
+	0	//xy mode
 };
 
 /*
@@ -65,6 +66,10 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 			if (strcmp("--print-in-parser", argv[i]) == 0)
 			{
 				popts->print_in_parser = 1;
+			}
+			if (strcmp("xy-mode", argv[i]) == 0)
+			{
+				popts->xy_mode = 1;
 			}
 		}
 	}

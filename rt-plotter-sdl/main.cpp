@@ -49,6 +49,32 @@ uint32_t fletchers_checksum32(uint32_t* arr, int size)
 	return fchk;
 }
 
+
+/*
+* Inputs:
+*	input_buf: raw unstuffed data buffer
+* Outputs:
+*	parsed_data: floats, parsed from input buffer
+* Returns: number of parsed values
+*/
+void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parsed_data, int* parsed_data_size)
+{
+	uint32_t* pbu32 = (uint32_t*)(&input_buf[0]);
+	int32_t* pbi32 = (int32_t*)(&input_buf[0]);
+	int wordsize = payload_size / sizeof(uint32_t);
+	int i = 0;
+	for (i = 0; i < wordsize; i++)
+	{
+		parsed_data[i] = ((float)pbi32[i]);
+		//printf("%d ", pbi32[i]);
+	}
+	//printf("\r\n");
+	//parsed_data[i] = ((float)pbu32[i]) / 1000.f;
+
+	*parsed_data_size = wordsize;
+}
+
+
 /*
 * Inputs:
 *	input_buf: raw unstuffed data buffer
@@ -92,7 +118,7 @@ void text_only(HANDLE*pSer)
 			pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
 			if (pld_size > 0)
 			{
-				parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+				parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
 
 				//obtain consecutive matching counts
 				if (wordsize == previous_wordsize && wordsize > 0)
