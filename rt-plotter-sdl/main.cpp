@@ -244,7 +244,14 @@ int main(int argc, char* args[])
 					pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
 					if (pld_size > 0)
 					{
-						parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+						if (gl_options.xy_mode == 0)
+						{
+							parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+						}
+						else
+						{
+							parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+						}
 						
 						//obtain consecutive matching counts
 						if (wordsize == previous_wordsize && wordsize > 0)
@@ -290,8 +297,10 @@ int main(int argc, char* args[])
 					//	if (min_candidate < mintime)
 					//		mintime = min_candidate;
 					//}
-
-					xscale = ((float)SCREEN_WIDTH) / (fpoints_lines[0][dbufsize-1].x - fpoints_lines[0][0].x);
+					if (gl_options.xy_mode == 0)
+					{
+						xscale = ((float)SCREEN_WIDTH) / (fpoints_lines[0][dbufsize - 1].x - fpoints_lines[0][0].x);
+					}
 				}
 
 
@@ -302,14 +311,24 @@ int main(int argc, char* args[])
 					//retrieve and load all available datapoints here
 					std::vector<fpoint_t>* pFpoints = &fpoints_lines[line];
 
-					/*Parsing and loading done HERE.
-					* if there is a more complex parsing function, implement it elsewhere and have it return X and Y.
-					* 
-					* It should be a function whose input is the unstuffed PPP buffer and whose output is x and y of each line contained in the buffer payload
-					*/
-					float x = gl_valdump[fpoints_lines.size()];
-					float y = gl_valdump[line];
 
+					float x, y;
+					if (gl_options.xy_mode == 0)
+					{
+						/*Parsing and loading done HERE.
+						* if there is a more complex parsing function, implement it elsewhere and have it return X and Y.
+						*
+						* It should be a function whose input is the unstuffed PPP buffer and whose output is x and y of each line contained in the buffer payload
+						*/
+						x = gl_valdump[fpoints_lines.size()];
+						y = gl_valdump[line];
+					}
+					else
+					{
+						x = gl_valdump[line % 2];
+						y = gl_valdump[(line % 2) + 1];
+					}
+					
 					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
 					(*pFpoints)[dbufsize - 1].x = x;
 					(*pFpoints)[dbufsize - 1].y = y;
@@ -330,9 +349,17 @@ int main(int argc, char* args[])
 						{
 							div_center = (div_pixel_size * line) + (div_pixel_size * .5f);	//calculate the center point of the line we're drawing on screen
 						}
-
-						points[i].x = (int)(((*pFpoints)[i].x - (*pFpoints)[0].x) * xscale);
-						points[i].y = SCREEN_HEIGHT - ( (int)((*pFpoints)[i].y * gl_options.yscale) + div_center );
+						if (gl_options.xy_mode == 0)
+						{
+							points[i].x = (int)(((*pFpoints)[i].x - (*pFpoints)[0].x) * xscale);
+							points[i].y = SCREEN_HEIGHT - ((int)((*pFpoints)[i].y * gl_options.yscale) + div_center);
+						}
+						else
+						{
+							xscale = ((float)SCREEN_HEIGHT) / 5000.f;
+							points[i].x = (int)(((*pFpoints)[i].x) * xscale);
+							points[i].y = ((int)((*pFpoints)[i].y * xscale));	//apply uniform scaling
+						}
 					}
 
 					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);

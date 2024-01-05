@@ -67,11 +67,11 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 			{
 				popts->print_in_parser = 1;
 			}
-			if (strcmp("xy-mode", argv[i]) == 0)
+			if (strcmp("--xy-mode", argv[i]) == 0)
 			{
 				popts->xy_mode = 1;
+				printf("Using xy mode...\r\n");
 			}
 		}
 	}
-
 }
