@@ -59,19 +59,24 @@ uint32_t fletchers_checksum32(uint32_t* arr, int size)
 */
 void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parsed_data, int* parsed_data_size)
 {
-	uint32_t* pbu32 = (uint32_t*)(&input_buf[0]);
-	int32_t* pbi32 = (int32_t*)(&input_buf[0]);
-	int wordsize = payload_size / sizeof(uint32_t);
+	//uint32_t* pbu32 = (uint32_t*)(&input_buf[0]);
+	//int32_t* pbi32 = (int32_t*)(&input_buf[0]);
+	//int wordsize = payload_size / sizeof(uint32_t);
+	//int i = 0;
+	//for (i = 0; i < wordsize; i++)
+	//{
+	//	parsed_data[i] = ((float)pbi32[i]);
+	//}
+	//*parsed_data_size = wordsize;
+	int16_t* pbi16 = (int16_t*)(&input_buf[0]);
+	int wordsize = payload_size / sizeof(int16_t);
 	int i = 0;
 	for (i = 0; i < wordsize; i++)
 	{
-		parsed_data[i] = ((float)pbi32[i]);
-		//printf("%d ", pbi32[i]);
+		parsed_data[i] = ((float)pbi16[i]);
 	}
-	//printf("\r\n");
-	//parsed_data[i] = ((float)pbu32[i]) / 1000.f;
-
 	*parsed_data_size = wordsize;
+
 }
 
 
