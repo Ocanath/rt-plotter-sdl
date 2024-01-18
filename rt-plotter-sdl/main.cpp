@@ -51,6 +51,23 @@ uint32_t fletchers_checksum32(uint32_t* arr, int size)
 
 
 /*
+* Load packed 12 bit values located in an 8bit array into
+* an unpacked (zero padded) 16 bit array. FSR utility function
+*/
+void unpack_8bit_into_12bit(uint8_t* arr, uint16_t* vals, int valsize)
+{
+	for (int i = 0; i < valsize; i++)
+		vals[i] = 0;	//clear the buffer before loading it with |=
+	for (int bidx = valsize * 12 - 4; bidx >= 0; bidx -= 4)
+	{
+		int validx = bidx / 12;
+		int arridx = bidx / 8;
+		int shift_val = (bidx % 8);
+		vals[validx] |= ((arr[arridx] >> shift_val) & 0x0F) << (bidx % 12);
+	}
+}
+
+/*
 * Inputs:
 *	input_buf: raw unstuffed data buffer
 * Outputs:
@@ -68,13 +85,23 @@ void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parse
 	//	parsed_data[i] = ((float)pbi32[i]);
 	//}
 	//*parsed_data_size = wordsize;
+
+
 	int16_t* pbi16 = (int16_t*)(&input_buf[0]);
-	int wordsize = payload_size / sizeof(int16_t);
+	//int wordsize = payload_size / sizeof(int16_t);
+	int wordsize = 8;
 	int i = 0;
-	for (i = 0; i < wordsize; i++)
+	for (i = 0; i < 2; i++)
 	{
 		parsed_data[i] = ((float)pbi16[i]);
 	}
+	uint16_t psensor_data[6] = { 0 };
+	unpack_8bit_into_12bit(&input_buf[4], psensor_data, 6);
+	for (int i = 0; i < 6; i++)
+	{
+		parsed_data[i + 2] = ((float)(psensor_data[i]));
+	}
+	
 	*parsed_data_size = wordsize;
 
 }
