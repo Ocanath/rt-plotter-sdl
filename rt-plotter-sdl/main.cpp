@@ -67,6 +67,19 @@ void unpack_8bit_into_12bit(uint8_t* arr, uint16_t* vals, int valsize)
 	}
 }
 
+
+/*
+Generic hex checksum calculation.
+TODO: use this in the psyonic API
+*/
+uint16_t get_checksum16(uint16_t* arr, int size)
+{
+	int16_t checksum = 0;
+	for (int i = 0; i < size; i++)
+		checksum += (int16_t)arr[i];
+	return -checksum;
+}
+
 /*
 * Inputs:
 *	input_buf: raw unstuffed data buffer
@@ -76,34 +89,42 @@ void unpack_8bit_into_12bit(uint8_t* arr, uint16_t* vals, int valsize)
 */
 void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parsed_data, int* parsed_data_size)
 {
-	//uint32_t* pbu32 = (uint32_t*)(&input_buf[0]);
-	//int32_t* pbi32 = (int32_t*)(&input_buf[0]);
-	//int wordsize = payload_size / sizeof(uint32_t);
-	//int i = 0;
-	//for (i = 0; i < wordsize; i++)
-	//{
-	//	parsed_data[i] = ((float)pbi32[i]);
-	//}
-	//*parsed_data_size = wordsize;
-
-
 	int16_t* pbi16 = (int16_t*)(&input_buf[0]);
-	//int wordsize = payload_size / sizeof(int16_t);
-	int wordsize = 8;
-	int i = 0;
-	for (i = 0; i < 2; i++)
-	{
-		parsed_data[i] = ((float)pbi16[i]);
-	}
+	int wordsize = payload_size / sizeof(int16_t);
+
+	int pdidx = 0;
+
+	parsed_data[pdidx++] = ((float)pbi16[0]);
+
+
 	uint16_t psensor_data[6] = { 0 };
-	unpack_8bit_into_12bit(&input_buf[4], psensor_data, 6);
+	unpack_8bit_into_12bit(&input_buf[2], psensor_data, 6);
 	for (int i = 0; i < 6; i++)
 	{
-		parsed_data[i + 2] = ((float)(psensor_data[i]));
+		parsed_data[pdidx++] = ((float)(psensor_data[i]));
 	}
-	
-	*parsed_data_size = wordsize;
 
+	parsed_data[pdidx++] = (float)pbi16[6];
+	if (wordsize > 8)
+	{
+		for (int i = 0; i < 7; i++)
+		{
+			parsed_data[pdidx++] = (float)pbi16[i + 7];
+		}
+	}
+	else
+	{
+		parsed_data[pdidx++] = (float)pbi16[7];	//either checksum or alignment offset
+	}
+
+	//parsed_data[pdidx++] = (float)(((double)GetTickCount64()) / 1000.0);
+
+	*parsed_data_size = pdidx;
+	printf("Got %d ", pdidx);
+	int16_t chk = get_checksum16((uint16_t*)pbi16, wordsize-1);
+	if (chk == pbi16[wordsize - 1])
+		printf("valid ");
+	printf("words: ");
 }
 
 
@@ -116,19 +137,6 @@ void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parse
 */
 void parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data, int * parsed_data_size)
 {
-	uint32_t* pbu32 = (uint32_t*)(&input_buf[0]);
-	int32_t* pbi32 = (int32_t*)(&input_buf[0]);
-	int wordsize = payload_size / sizeof(uint32_t);
-	int i = 0;
-	for (i = 0; i < wordsize - 1; i++)
-	{
-		parsed_data[i] = ((float)pbi32[i]);
-		//printf("%d ", pbi32[i]);
-	}
-	//printf("\r\n");
-	parsed_data[i] = ((float)pbu32[i]) / 1000.f;
-
-	*parsed_data_size = wordsize;
 }
 
 
@@ -153,27 +161,27 @@ void text_only(HANDLE*pSer)
 				parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
 
 				//obtain consecutive matching counts
-				if (wordsize == previous_wordsize && wordsize > 0)
+				//if (wordsize == previous_wordsize && wordsize > 0)
+				//{
+				//	wordsize_match_count++;
+				for (int fvidx = 0; fvidx < wordsize; fvidx++)
 				{
-					wordsize_match_count++;
-					for (int fvidx = 0; fvidx < wordsize; fvidx++)
+					if (gl_options.print_in_parser == 0)
 					{
-						if (gl_options.print_in_parser == 0)
-						{
-							float val = gl_valdump[fvidx];
-							if (val >= 0)
-								printf("+%0.6f, ", val);
-							else
-								printf("%0.6f, ", val);
-						}
+						float val = gl_valdump[fvidx];
+						if (val >= 0)
+							printf("+%0.6f, ", val);
+						else
+							printf("%0.6f, ", val);
 					}
-					printf("\r\n");
 				}
-				else
-				{
-					wordsize_match_count = 0;
-				}
-				previous_wordsize = wordsize;
+				printf("\r\n");
+				//}
+				//else
+				//{
+				//	wordsize_match_count = 0;
+				//}
+				//previous_wordsize = wordsize;
 			}
 		}
 	}
