@@ -105,6 +105,7 @@ void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parse
 	}
 
 	parsed_data[pdidx++] = (float)pbi16[6];
+
 	if (wordsize > 8)
 	{
 		for (int i = 0; i < 7; i++)
@@ -124,7 +125,7 @@ void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parse
 	int16_t chk = get_checksum16((uint16_t*)pbi16, wordsize-1);
 	if (chk == pbi16[wordsize - 1])
 		printf("valid ");
-	printf("words: ");
+	printf("words from %d int16s: ", wordsize);
 }
 
 
