@@ -176,7 +176,7 @@ void text_only(HANDLE*pSer)
 							printf("%0.6f, ", val);
 					}
 				}
-				printf("\r\n");
+				printf("\n");
 				//}
 				//else
 				//{
