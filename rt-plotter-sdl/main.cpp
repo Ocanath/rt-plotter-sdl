@@ -68,7 +68,7 @@ void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parse
 		parsed_data[i] = ((float)pbi32[i]);
 		//printf("%d ", pbi32[i]);
 	}
-	//printf("\r\n");
+	//printf("\n");
 	//parsed_data[i] = ((float)pbu32[i]) / 1000.f;
 
 	*parsed_data_size = wordsize;
@@ -93,7 +93,7 @@ void parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data, 
 		parsed_data[i] = ((float)pbi32[i]);
 		//printf("%d ", pbi32[i]);
 	}
-	//printf("\r\n");
+	//printf("\n");
 	parsed_data[i] = ((float)pbu32[i]) / 1000.f;
 
 	*parsed_data_size = wordsize;
@@ -130,12 +130,15 @@ void text_only(HANDLE*pSer)
 						{
 							float val = gl_valdump[fvidx];
 							if (val >= 0)
-								printf("+%0.6f, ", val);
+								printf("+%0.6f", val);
 							else
-								printf("%0.6f, ", val);
+								printf("%0.6f", val);
+							
+							if (fvidx <  (wordsize - 1))
+								printf(", ");
 						}
 					}
-					printf("\r\n");
+					printf("\n");
 				}
 				else
 				{
@@ -161,14 +164,17 @@ int main(int argc, char* args[])
 		int rc = connect_to_usb_serial(&serialport, namestr, gl_options.baud_rate);
 		if (rc != 0)
 		{
-			printf("Connected to COM port %s successfully\r\n", namestr);
+			if (!(gl_options.csv_header == 1 && (gl_options.print_only == 1 || gl_options.print_in_parser == 1)))
+			{
+				printf("Connected to COM port %s successfully\n", namestr);
+			}
 			found = 1;
 			break;
 		}
 	}
 	if (found == 0)
 	{
-		printf("No COM ports found\r\n");
+		printf("No COM ports found\n");
 	}
 	if (gl_options.print_only)
 	{
@@ -180,7 +186,7 @@ int main(int argc, char* args[])
 
 	if (TTF_Init() < 0)
 	{
-		printf("TTL init failed\r\n");
+		printf("TTL init failed\n");
 	}
 	TTF_Font* font = TTF_OpenFont("ARIAL.TTF", 12);
 	SDL_Color txt_fgColor = { 255, 255, 255, 255 };
@@ -263,7 +269,7 @@ int main(int argc, char* args[])
 								{
 									printf("%f, ", gl_valdump[fvidx]);
 								}
-								printf("\r\n");
+								printf("\n");
 							}
 						}
 						else
@@ -356,9 +362,9 @@ int main(int argc, char* args[])
 						}
 						else
 						{
-							xscale = ((float)SCREEN_HEIGHT) / 5000.f;
-							points[i].x = (int)(((*pFpoints)[i].x) * xscale);
-							points[i].y = ((int)((*pFpoints)[i].y * xscale));	//apply uniform scaling
+							xscale = ((float)SCREEN_HEIGHT) / (2.f*4096.f);
+							points[i].x = (int)(((*pFpoints)[i].x) * xscale) + SCREEN_WIDTH /  2;
+							points[i].y = ((int)((*pFpoints)[i].y * xscale)) + SCREEN_HEIGHT / 2;	//apply uniform scaling
 						}
 					}
 

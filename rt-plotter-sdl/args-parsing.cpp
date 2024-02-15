@@ -2,16 +2,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <string>
 
 cmd_options_t gl_options = {
 	0,	//spread lines
-	921600,	//baud rate
-	400.f/4096.f,	//yscale,
+	460800,	//baud rate
+	400.f/(190.f*4096.f),	//yscale,
 	0,	//print values to console
 	0, //print values to console ONLY (no actual plotting!)
 	0, //print in parser flag active
-	0	//xy mode
+	0,	//xy mode
+	0	//csv header
 };
+
+std::string gl_csvheader;
 
 /*
 * Parse any and all arguments coming in
@@ -72,6 +76,13 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				popts->xy_mode = 1;
 				printf("Using xy mode...\r\n");
 			}
+			if (strcmp("--csv-header", argv[i]) == 0)
+			{
+				popts->csv_header = 1;
+				gl_csvheader = argv[i + 1];
+				printf("%s\n", gl_csvheader.c_str());
+			}
+
 		}
 	}
 }
