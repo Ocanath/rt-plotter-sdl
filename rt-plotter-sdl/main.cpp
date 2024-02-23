@@ -138,6 +138,36 @@ void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parse
 */
 void parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data, int * parsed_data_size)
 {
+	int16_t* pbi16 = (int16_t*)(&input_buf[0]);
+	int wordsize = payload_size / sizeof(int16_t);
+
+	int pdidx = 0;
+
+	parsed_data[pdidx++] = ((float)pbi16[0]);
+
+
+	uint16_t psensor_data[6] = { 0 };
+	unpack_8bit_into_12bit(&input_buf[2], psensor_data, 6);
+	for (int i = 0; i < 6; i++)
+	{
+		parsed_data[pdidx++] = ((float)(psensor_data[i]));
+	}
+
+	parsed_data[pdidx++] = (float)pbi16[6];
+
+	if (wordsize > 8)
+	{
+		for (int i = 0; i < 7; i++)
+		{
+			parsed_data[pdidx++] = (float)pbi16[i + 7];
+		}
+	}
+	else
+	{
+		parsed_data[pdidx++] = (float)pbi16[7];	//either checksum or alignment offset
+	}
+	parsed_data[pdidx++] = (float)(GetTickCount64())/1000.f;
+	*parsed_data_size = pdidx;
 }
 
 
