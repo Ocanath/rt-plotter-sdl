@@ -65,7 +65,7 @@ void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parse
 	int i = 0;
 	for (i = 0; i < wordsize; i++)
 	{
-		parsed_data[i] = ((float)pbi32[i]);
+		parsed_data[i] = ((float)pbi32[i]) * gl_options.yscale;
 		//printf("%d ", pbi32[i]);
 	}
 	//printf("\n");
@@ -214,7 +214,8 @@ int main(int argc, char* args[])
 			SDL_Event e; 
 			bool quit = false; 
 			int inc = 0;
-			const int dbufsize = SCREEN_WIDTH*3;
+			//const int dbufsize = SCREEN_WIDTH*3;
+			const int dbufsize = 1000;
 			std::vector<SDL_Point> points(dbufsize);
 			const int numlines = 1;
 			std::vector<std::vector<fpoint_t>> fpoints_lines(numlines, std::vector<fpoint_t>(dbufsize) );
@@ -230,6 +231,12 @@ int main(int argc, char* args[])
 			int wordsize = 0;
 			int previous_wordsize = 0;
 			int wordsize_match_count = 0;
+			std::vector<uint8_t> readbuf;
+			int16_t x[3] = { 0 };
+			int16_t y[3] = { 0 };
+			int16_t V[3] = { 0 };
+			int16_t pixRes[3] = { 0 };
+			int16_t* pArr[4] = { x, y, V, pixRes };
 
 			while (quit == false) 
 			{
@@ -246,126 +253,57 @@ int main(int argc, char* args[])
 				int rc = ReadFile(serialport, gl_ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
 				for (int i = 0; i < (int)num_bytes_read; i++)
 				{
-					uint8_t new_byte = gl_ser_readbuf[i];
-					pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
-					if (pld_size > 0)
+					for (int i = 0; i < (int)num_bytes_read; i++)
 					{
-						if (gl_options.xy_mode == 0)
+						uint8_t new_byte = gl_ser_readbuf[i];
+						readbuf.push_back(new_byte);
+					}
+					for (int i = 0; i < ((int)readbuf.size()) - 1; i++)
+					{
+						if (readbuf[i] == 0x55 && readbuf[i+1] == 0xCC)
 						{
-							parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
-						}
-						else
-						{
-							parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
-						}
-						
-						//obtain consecutive matching counts
-						if (wordsize == previous_wordsize && wordsize > 0)
-						{
-							wordsize_match_count++;
-							if (gl_options.print_vals)
+
+							//printf("%d\r\n", i);
+							int startidx = i - 28;
+							if (startidx >= 0)
 							{
-								for (int fvidx = 0; fvidx < wordsize; fvidx++)
+								printf("%X%X%X%0.2X: ", readbuf[startidx], readbuf[startidx+1], readbuf[startidx+2], readbuf[startidx+3]);
+								int bufidx = startidx + 4;
+								for (int target = 0; target < 3; target++)
 								{
-									printf("%f, ", gl_valdump[fvidx]);
+									for (int arridx = 0; arridx < 4; arridx++)
+									{
+										int32_t tmp = 0;
+										uint8_t b1 = readbuf[bufidx];
+										uint8_t b2 = readbuf[bufidx+1];
+										tmp = (int32_t)b1 + ((int32_t)b2 * 256);
+										if (tmp < 0x8000)
+											pArr[arridx][target] = (int16_t)(0 - tmp);
+										else
+											pArr[arridx][target] = (int16_t)(tmp - 0x8000);
+										bufidx += 2;
+									}
+									printf("(%d,%d,%d) ", x[target], y[target], V[target]);
 								}
-								printf("\n");
+								printf("\r\n");
 							}
-						}
-						else
-						{
-							wordsize_match_count = 0;
-						}
-						previous_wordsize = wordsize;
-						
-
-						//resize action
-						if(wordsize_match_count >= 100)
-						{
-							int numlines = (wordsize - 1);
-							if (fpoints_lines.size() != numlines)
-							{
-								fpoints_lines.resize(numlines, std::vector<fpoint_t>(dbufsize));
-							}
+							readbuf.clear();
 						}
 					}
 				}
 
-				{	//obtain a new xscale.
-					//float mintime = 10000000000000.f;
-					//float maxtime = 0.f;
-					//for (int line = 0; line < fpoints_lines.size(); line++)
-					//{
-					//	float max_candidate = fpoints_lines[line][dbufsize - 1].x;
-					//	float min_candidate = fpoints_lines[line][0].x;
-					//	if (max_candidate > maxtime)
-					//		maxtime = max_candidate;
-					//	if (min_candidate < mintime)
-					//		mintime = min_candidate;
-					//}
-					if (gl_options.xy_mode == 0)
-					{
-						xscale = ((float)SCREEN_WIDTH) / (fpoints_lines[0][dbufsize - 1].x - fpoints_lines[0][0].x);
-					}
-				}
 
-
-				for (int line = 0; line < fpoints_lines.size(); line++)
 				{	
-					SDL_SetRenderDrawColor(pRenderer, template_colors[line % NUM_COLORS].r, template_colors[line % NUM_COLORS].g, template_colors[line % NUM_COLORS].b, 255);
+					SDL_SetRenderDrawColor(pRenderer, 0xFF, 0x00, 0x00, 255);
 
-					//retrieve and load all available datapoints here
-					std::vector<fpoint_t>* pFpoints = &fpoints_lines[line];
-
-
-					float x, y;
-					if (gl_options.xy_mode == 0)
-					{
-						/*Parsing and loading done HERE.
-						* if there is a more complex parsing function, implement it elsewhere and have it return X and Y.
-						*
-						* It should be a function whose input is the unstuffed PPP buffer and whose output is x and y of each line contained in the buffer payload
-						*/
-						x = gl_valdump[fpoints_lines.size()];
-						y = gl_valdump[line];
-					}
-					else
-					{
-						x = gl_valdump[line % 2];
-						y = gl_valdump[(line % 2) + 1];
-					}
-					
-					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
-					(*pFpoints)[dbufsize - 1].x = x;
-					(*pFpoints)[dbufsize - 1].y = y;
-
-
-					float div_pixel_size = 0;
-					float div_center = 0;
-					if(gl_options.spread_lines)
-						div_pixel_size = (float)SCREEN_HEIGHT / ((float)fpoints_lines.size());
-					else
-					{
-						div_center = (float)SCREEN_HEIGHT / 2;
-					}
-
+					const float target_radius_pixels = 50.f;
+					float increment = (2 * 3.14159265f) / ((float)points.size());
 					for (int i = 0; i < points.size(); i++)
 					{
-						if (gl_options.spread_lines)
-						{
-							div_center = (div_pixel_size * line) + (div_pixel_size * .5f);	//calculate the center point of the line we're drawing on screen
-						}
-						if (gl_options.xy_mode == 0)
-						{
-							points[i].x = (int)(((*pFpoints)[i].x - (*pFpoints)[0].x) * xscale);
-							points[i].y = SCREEN_HEIGHT - ((int)((*pFpoints)[i].y * gl_options.yscale) + div_center);
-						}
-						else
-						{
-							xscale = ((float)SCREEN_HEIGHT) / (2.f*4096.f);
-							points[i].x = (int)(((*pFpoints)[i].x) * xscale) + SCREEN_WIDTH /  2;
-							points[i].y = ((int)((*pFpoints)[i].y * xscale)) + SCREEN_HEIGHT / 2;	//apply uniform scaling
-						}
+						float t_parametric = increment * (float)i;
+
+						points[i].x = (int)(cos(t_parametric) * target_radius_pixels) + SCREEN_WIDTH / 2 + (int)((float)x[0] * 0.3f);
+						points[i].y = (int)(sin(t_parametric)* target_radius_pixels) + (int)((float)y[0] * 0.3f);
 					}
 
 					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);
