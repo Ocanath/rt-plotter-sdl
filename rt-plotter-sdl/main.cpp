@@ -238,10 +238,24 @@ int main(int argc, char* args[])
 			int16_t pixRes[3] = { 0 };
 			int16_t* pArr[4] = { x, y, V, pixRes };
 
+
+			uint8_t Multi_Target_Detection_CMD[] = { 0xFD,0xFC,0xFB,0xFA,0x02,0x00,0x90,0x00,0x04,0x03,0x02,0x01 };
+			int num_bytes_written = 0;
+			WriteFile(serialport, Multi_Target_Detection_CMD, sizeof(Multi_Target_Detection_CMD), (LPDWORD)(&num_bytes_written), NULL);
+			//printf("wrote %d words\r\n", num_bytes_written);
+
+			uint64_t send_mt_tracking_ts = 0;
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
 				float t = ((float)tick) * 0.001f;
+
+				if ((tick - send_mt_tracking_ts) > 300)
+				{
+					send_mt_tracking_ts = tick;
+					WriteFile(serialport, Multi_Target_Detection_CMD, sizeof(Multi_Target_Detection_CMD), (LPDWORD)(&num_bytes_written), NULL);
+					printf("wrote %d words\r\n", num_bytes_written);
+				}
 
 				SDL_SetRenderDrawColor(pRenderer, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
 				SDL_RenderClear(pRenderer);
@@ -267,7 +281,7 @@ int main(int argc, char* args[])
 							int startidx = i - 28;
 							if (startidx >= 0)
 							{
-								printf("%X%X%X%0.2X: ", readbuf[startidx], readbuf[startidx+1], readbuf[startidx+2], readbuf[startidx+3]);
+								//printf("%X%X%X%0.2X: ", readbuf[startidx], readbuf[startidx+1], readbuf[startidx+2], readbuf[startidx+3]);
 								int bufidx = startidx + 4;
 								for (int target = 0; target < 3; target++)
 								{
@@ -292,9 +306,9 @@ int main(int argc, char* args[])
 					}
 				}
 
-
+				for(int target = 0; target < 3; target++)
 				{	
-					SDL_SetRenderDrawColor(pRenderer, 0xFF, 0x00, 0x00, 255);
+					SDL_SetRenderDrawColor(pRenderer, template_colors[target].r, template_colors[target].g, template_colors[target].b, 255);
 
 					const float target_radius_pixels = 50.f;
 					float increment = (2 * 3.14159265f) / ((float)points.size());
@@ -302,12 +316,13 @@ int main(int argc, char* args[])
 					{
 						float t_parametric = increment * (float)i;
 
-						points[i].x = (int)(cos(t_parametric) * target_radius_pixels) + SCREEN_WIDTH / 2 + (int)((float)x[0] * 0.3f);
-						points[i].y = (int)(sin(t_parametric)* target_radius_pixels) + (int)((float)y[0] * 0.3f);
+						points[i].x = (int)(cos(t_parametric) * target_radius_pixels) + SCREEN_WIDTH / 2 + (int)((float)x[target] * 0.3f);
+						points[i].y = (int)(sin(t_parametric)* target_radius_pixels) + (int)((float)y[target] * 0.3f);
 					}
 
 					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);
 				}
+
 				SDL_RenderPresent(pRenderer);
 				
 				SDL_PollEvent(&e);
