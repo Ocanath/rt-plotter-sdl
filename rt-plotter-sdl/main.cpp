@@ -102,7 +102,7 @@ void text_only(HANDLE*pSer)
 					{
 						if (gl_options.print_in_parser == 0)
 						{
-							float val = gl_valdump[fvidx];
+							float val = gl_valdump[fvidx] * gl_options.yscale;
 							if (val >= 0)
 								printf("+%0.6f, ", val);
 							else
@@ -228,7 +228,7 @@ int main(int argc, char* args[])
 							{
 								for (int fvidx = 0; fvidx < wordsize; fvidx++)
 								{
-									printf("%f, ", gl_valdump[fvidx]);
+									printf("%f, ", gl_valdump[fvidx] * gl_options.yscale);
 								}
 								printf("\r\n");
 							}
@@ -290,7 +290,7 @@ int main(int argc, char* args[])
 						}
 
 						points[i].x = (int)((*pFpoints)[i].x * gl_options.yscale) + SCREEN_WIDTH / 2;
-						points[i].y = (int)((*pFpoints)[i].y * gl_options.yscale) + SCREEN_HEIGHT / 2;
+						points[i].y = -(int)((*pFpoints)[i].y * gl_options.yscale) + SCREEN_HEIGHT / 2;
 					}
 
 					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);

@@ -6,7 +6,7 @@
 cmd_options_t gl_options = {
 	0,	//spread lines
 	921600,	//baud rate
-	400.f/4096.f,	//yscale,
+	100.f/4096.f,	//yscale,
 	0,	//print values to console
 	0, //print values to console ONLY (no actual plotting!)
 	0, //print in parser flag active
