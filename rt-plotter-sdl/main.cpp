@@ -267,7 +267,7 @@ int main(int argc, char* args[])
 							{
 								for (int fvidx = 0; fvidx < wordsize; fvidx++)
 								{
-									printf("%f, ", gl_valdump[fvidx]);
+									printf("%f, ", gl_valdump[fvidx]*gl_options.yscale);
 								}
 								printf("\n");
 							}
