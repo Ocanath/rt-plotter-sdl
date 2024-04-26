@@ -243,7 +243,7 @@ int main(int argc, char* args[])
 						//resize action
 						if(wordsize_match_count >= 100)
 						{
-							int numlines = (wordsize - 1);
+							int numlines = wordsize/2;
 							if (fpoints_lines.size() != numlines)
 							{
 								fpoints_lines.resize(numlines, std::vector<fpoint_t>(dbufsize));
@@ -265,8 +265,8 @@ int main(int argc, char* args[])
 					* 
 					* It should be a function whose input is the unstuffed PPP buffer and whose output is x and y of each line contained in the buffer payload
 					*/
-					float x = gl_valdump[line % 2];
-					float y = gl_valdump[(line % 2) + 1];
+					float x = gl_valdump[line * 2];
+					float y = gl_valdump[(line * 2) + 1];
 
 					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
 					(*pFpoints)[dbufsize - 1].x = x;
@@ -289,9 +289,8 @@ int main(int argc, char* args[])
 							div_center = (div_pixel_size * line) + (div_pixel_size * .5f);	//calculate the center point of the line we're drawing on screen
 						}
 
-						xscale = ((float)SCREEN_HEIGHT) / 5000.f;
-						points[i].x = (int)(((*pFpoints)[i].x) * xscale);
-						points[i].y = ( (int)((*pFpoints)[i].y * xscale));
+						points[i].x = (int)((*pFpoints)[i].x * gl_options.yscale) + SCREEN_WIDTH / 2;
+						points[i].y = (int)((*pFpoints)[i].y * gl_options.yscale) + SCREEN_HEIGHT / 2;
 					}
 
 					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);
