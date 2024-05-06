@@ -57,7 +57,7 @@ uint32_t fletchers_checksum32(uint32_t* arr, int size)
 *	parsed_data: floats, parsed from input buffer
 * Returns: number of parsed values
 */
-void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parsed_data, int* parsed_data_size)
+void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parsed_data, int * parsed_data_size)
 {
 	uint32_t* pbu32 = (uint32_t*)(&input_buf[0]);
 	int32_t* pbi32 = (int32_t*)(&input_buf[0]);
@@ -282,11 +282,20 @@ int main(int argc, char* args[])
 						//resize action
 						if(wordsize_match_count >= 100)
 						{
-							int numlines = (wordsize - 1);
-							if (fpoints_lines.size() != numlines)
+							int num_lines = 0;
+							if (gl_options.xy_mode == 0)
 							{
-								fpoints_lines.resize(numlines, std::vector<fpoint_t>(dbufsize));
+								num_lines = (wordsize - 1);
 							}
+							else
+							{
+								num_lines = wordsize / 2;
+							}
+							if (fpoints_lines.size() != num_lines)
+							{
+								fpoints_lines.resize(num_lines, std::vector<fpoint_t>(dbufsize));
+							}
+
 						}
 					}
 				}
@@ -331,8 +340,8 @@ int main(int argc, char* args[])
 					}
 					else
 					{
-						x = gl_valdump[line % 2];
-						y = gl_valdump[(line % 2) + 1];
+						x = gl_valdump[line * 2];
+						y = gl_valdump[(line * 2) + 1];
 					}
 					
 					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
@@ -362,9 +371,8 @@ int main(int argc, char* args[])
 						}
 						else
 						{
-							xscale = ((float)SCREEN_HEIGHT) / (2.f*4096.f);
-							points[i].x = (int)(((*pFpoints)[i].x) * xscale) + SCREEN_WIDTH /  2;
-							points[i].y = ((int)((*pFpoints)[i].y * xscale)) + SCREEN_HEIGHT / 2;	//apply uniform scaling
+							points[i].x = (int)(((*pFpoints)[i].x) * gl_options.yscale) + SCREEN_WIDTH /  2;
+							points[i].y = (-(int)((*pFpoints)[i].y * gl_options.yscale)) + SCREEN_HEIGHT / 2;	//apply uniform scaling
 						}
 					}
 
