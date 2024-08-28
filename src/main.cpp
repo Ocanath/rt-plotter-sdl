@@ -96,7 +96,6 @@ void text_only(int serial_handle)
 			for (int i = 0; i < nb; i++)
 			{
 				uint8_t new_byte = gl_ser_readbuf[i];
-				printf("%c",new_byte);
 				pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
 				if (pld_size > 0)
 				{
