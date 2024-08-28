@@ -90,47 +90,50 @@ void text_only(int serial_handle)
 	int wordsize_match_count = 0;
 	while (1)
 	{
-		int nb = read(serial_handle, &gl_ser_readbuf, sizeof(gl_ser_readbuf) );
-		for (int i = 0; i < nb; i++)
+		int nb = read(serial_handle, gl_ser_readbuf, sizeof(gl_ser_readbuf) );
+		if(nb > 0)
 		{
-			uint8_t new_byte = gl_ser_readbuf[i];
-			printf("%c",new_byte);
-			pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
-			if (pld_size > 0)
+			for (int i = 0; i < nb; i++)
 			{
-				printf("received %d bytes: ", pld_size);
-				for(int bv = 0; bv < pld_size; bv++)
+				uint8_t new_byte = gl_ser_readbuf[i];
+				printf("%c",new_byte);
+				pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
+				if (pld_size > 0)
 				{
-					printf("%c",gl_ppp_payload_buffer[bv]);
-				}
-				printf("\r\n");
-				// parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+					printf("received %d bytes: ", pld_size);
+					for(int bv = 0; bv < pld_size; bv++)
+					{
+						printf("%c",gl_ppp_payload_buffer[bv]);
+					}
+					printf("\r\n");
+					// parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
 
-				// //obtain consecutive matching counts
-				// if (wordsize == previous_wordsize && wordsize > 0)
-				// {
-				// 	wordsize_match_count++;
-				// 	for (int fvidx = 0; fvidx < wordsize; fvidx++)
-				// 	{
-				// 		if (gl_options.print_in_parser == 0)
-				// 		{
-				// 			float val = gl_valdump[fvidx]*gl_options.yscale;
-				// 			if (val >= 0)
-				// 				printf("+%0.6f", val);
-				// 			else
-				// 				printf("%0.6f", val);
-							
-				// 			if (fvidx <  (wordsize - 1))
-				// 				printf(", ");
-				// 		}
-				// 	}
-				// 	printf("\n");
-				// }
-				// else
-				// {
-				// 	wordsize_match_count = 0;
-				// }
-				// previous_wordsize = wordsize;
+					// //obtain consecutive matching counts
+					// if (wordsize == previous_wordsize && wordsize > 0)
+					// {
+					// 	wordsize_match_count++;
+					// 	for (int fvidx = 0; fvidx < wordsize; fvidx++)
+					// 	{
+					// 		if (gl_options.print_in_parser == 0)
+					// 		{
+					// 			float val = gl_valdump[fvidx]*gl_options.yscale;
+					// 			if (val >= 0)
+					// 				printf("+%0.6f", val);
+					// 			else
+					// 				printf("%0.6f", val);
+								
+					// 			if (fvidx <  (wordsize - 1))
+					// 				printf(", ");
+					// 		}
+					// 	}
+					// 	printf("\n");
+					// }
+					// else
+					// {
+					// 	wordsize_match_count = 0;
+					// }
+					// previous_wordsize = wordsize;
+				}
 			}
 		}
 	}
