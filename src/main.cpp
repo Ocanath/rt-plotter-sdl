@@ -6,6 +6,14 @@
 #include "SDL2/SDL.h"
 #include "PPP.h"
 #include "colors.h"
+//linux headers for serial port
+#include <fcntl.h> // Contains file controls like O_RDWR
+#include <errno.h> // Error integer and strerror() function
+#include <unistd.h> // write(), read(), close()
+#include <asm/ioctls.h>
+#include <asm/termbits.h>
+#include <sys/ioctl.h> // Used for TCGETS2, which is required for custom baud rates
+
 
 typedef struct fpoint_t
 {
@@ -28,7 +36,64 @@ const int SCREEN_WIDTH = 1200;
 const int SCREEN_HEIGHT = 800;
 
 
-int main(int argc, char *args[]){
+int main(int argc, char *args[])
+{
+	int serial_port = open("/dev/ttyUSB0", O_RDWR);
+	if (serial_port < 0) {
+		printf("Error %i from open: %s\n", errno, strerror(errno));
+	}
+
+	struct termios2 tty;
+	ioctl(serial_port, TCGETS2, &tty);
+	tty.c_cflag     &=  ~CSIZE;		// CSIZE is a mask for the number of bits per character
+	tty.c_cflag |= CS8; 			// 8 bits per byte (most common)
+	tty.c_cflag &= ~PARENB; 		// Clear parity bit, disabling parity (most common)
+	tty.c_cflag     &=  ~CSTOPB;	// one stop bit
+	tty.c_cflag &= ~CRTSCTS;		//hw flow control off
+	tty.c_cflag     |=  CREAD | CLOCAL; // Turn on READ & ignore ctrl lines (CLOCAL = 1)
+	
+	tty.c_oflag     =   0;              // No remapping, no delays
+	tty.c_oflag     &=  ~OPOST;         // Make raw
+	tty.c_iflag &= ~(IXON | IXOFF | IXANY);
+	tty.c_iflag 	&= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL);
+	tty.c_lflag &= ~ICANON;
+	tty.c_lflag &= ~ECHO; // Disable echo
+	tty.c_lflag		&= ~ECHOE;     // Turn off echo erase (echo erase only relevant if canonical input is active)
+	tty.c_lflag		&= ~ECHONL;    //
+	tty.c_lflag		&= ~ISIG;      // Disables recognition of INTR (interrupt), QUIT and SUSP (suspend) characters
+
+
+	//custom baud rate
+	tty.c_cflag &= ~CBAUD;
+	tty.c_cflag |= CBAUDEX;
+	// tty.c_cflag |= BOTHER;
+	tty.c_ispeed = 921600;
+	tty.c_ospeed = 921600;
+
+	//timeout=0
+	tty.c_cc[VTIME] = 0;
+	tty.c_cc[VMIN] = 0;
+
+	ioctl(serial_port, TCSETS2, &tty);
+
+
+	uint64_t tick = 0;
+	while(tick < 0xFFFFFFFF * 5)
+	{
+		int nb = read(serial_port, &gl_ser_readbuf, sizeof(gl_ser_readbuf) );
+		if(nb > 0)
+		{
+			printf("%d bytes: ",nb);
+			for(int i = 0; i < nb; i++)
+			{
+				printf("%c", gl_ser_readbuf[i]);
+			}
+			printf("\r\n");
+		}
+	}
+
+	close(serial_port);
+	return 0;
 
 
 	//The window we'll be rendering to
