@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <vector>
 #include <math.h>
+#include <algorithm>
 #include "SDL2/SDL.h"
 
 
@@ -86,12 +87,10 @@ int main(int argc, char *args[]){
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
-				float t = ((float)tick) * 0.001f;
+				double t = ((double)tick) * 0.001;
 
 				SDL_SetRenderDrawColor(pRenderer, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
 				SDL_RenderClear(pRenderer);
-
-
 
 				for (int line = 0; line < fpoints_lines.size(); line++)
 				{	
@@ -99,6 +98,11 @@ int main(int argc, char *args[]){
 
 					//retrieve and load all available datapoints here
 					std::vector<fpoint_t>* pFpoints = &fpoints_lines[line];
+
+					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
+					(*pFpoints)[dbufsize - 1].x = sin(t)*100;
+					(*pFpoints)[dbufsize - 1].y = cos(t)*100;
+
 
 					for (int i = 0; i < points.size(); i++)
 					{
