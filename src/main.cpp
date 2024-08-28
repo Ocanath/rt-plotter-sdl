@@ -4,7 +4,8 @@
 #include <math.h>
 #include <algorithm>
 #include "SDL2/SDL.h"
-
+#include "PPP.h"
+#include "colors.h"
 
 typedef struct fpoint_t
 {
@@ -12,24 +13,14 @@ typedef struct fpoint_t
 	float y;
 }fpoint_t;
 
-#define NUM_COLORS 8
-typedef struct rgb_t
-{
-	uint8_t r;
-	uint8_t g;
-	uint8_t b;
-}rgb_t;
-const rgb_t template_colors[NUM_COLORS] = 
-{
-	{0xFF, 0xFF, 0xFF},	//white
-	{0x00, 0x72, 0xBD},	//blue
-	{0xD9, 0x53, 0x19},	//orange
-	{0xED, 0xB1, 0x20},	//yellow
-	{0x7E, 0x2f, 0x8E},	//purple
-	{0x77, 0xAC, 0x30},	//greeeen
-	{0x4D, 0xBE, 0xEE},	//light blue
-	{0xA2, 0x14, 0x2F}	//maroon
-};
+#define PAYLOAD_SIZE 512
+#define UNSTUFFING_BUFFER_SIZE (PAYLOAD_SIZE * 2 + 2)
+
+static int gl_ppp_bidx = 0;
+static uint8_t gl_ppp_payload_buffer[PAYLOAD_SIZE] = { 0 };	//buffer
+static uint8_t gl_ppp_unstuffing_buffer[UNSTUFFING_BUFFER_SIZE] = { 0 };
+static uint8_t gl_ser_readbuf[512] = { 0 };
+static float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
 
 
 //Screen dimension constants
@@ -69,7 +60,7 @@ int main(int argc, char *args[]){
 			int inc = 0;
 			const int dbufsize = SCREEN_WIDTH*3;
 			std::vector<SDL_Point> points(dbufsize);
-			const int numlines = 1;
+			const int numlines = 2;
 			std::vector<std::vector<fpoint_t>> fpoints_lines(numlines, std::vector<fpoint_t>(dbufsize) );
 
 
@@ -92,6 +83,13 @@ int main(int argc, char *args[]){
 				SDL_SetRenderDrawColor(pRenderer, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
 				SDL_RenderClear(pRenderer);
 
+				/*
+				Get Data over Serial Stream
+				*/
+				uint8_t new_byte = (uint8_t)t;
+				int pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
+
+
 				for (int line = 0; line < fpoints_lines.size(); line++)
 				{	
 					SDL_SetRenderDrawColor(pRenderer, template_colors[line % NUM_COLORS].r, template_colors[line % NUM_COLORS].g, template_colors[line % NUM_COLORS].b, 255);
@@ -100,7 +98,7 @@ int main(int argc, char *args[]){
 					std::vector<fpoint_t>* pFpoints = &fpoints_lines[line];
 
 					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
-					(*pFpoints)[dbufsize - 1].x = sin(t)*100;
+					(*pFpoints)[dbufsize - 1].x = sin(t)*100 + 100*(line%2);
 					(*pFpoints)[dbufsize - 1].y = cos(t)*100;
 
 
