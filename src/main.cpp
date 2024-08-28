@@ -90,7 +90,7 @@ void text_only(int serial_handle)
 	int wordsize_match_count = 0;
 	while (1)
 	{
-		int nb = read(serial_handle, gl_ser_readbuf, sizeof(gl_ser_readbuf) );
+		int nb = read(serial_handle, &gl_ser_readbuf, sizeof(gl_ser_readbuf) );
 		if(nb > 0)
 		{
 			for (int i = 0; i < nb; i++)
