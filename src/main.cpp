@@ -6,6 +6,7 @@
 #include "SDL2/SDL.h"
 #include "PPP.h"
 #include "colors.h"
+#include "args-parsing.h"
 //linux headers for serial port
 #include <fcntl.h> // Contains file controls like O_RDWR
 #include <errno.h> // Error integer and strerror() function
@@ -31,6 +32,105 @@ static uint8_t gl_ser_readbuf[512] = { 0 };
 static float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
 
 
+/*
+* Inputs:
+*	input_buf: raw unstuffed data buffer
+* Outputs:
+*	parsed_data: floats, parsed from input buffer
+* Returns: number of parsed values
+*/
+void parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data, int * parsed_data_size)
+{
+	uint32_t* pbu32 = (uint32_t*)(&input_buf[0]);
+	int32_t* pbi32 = (int32_t*)(&input_buf[0]);
+	int wordsize = payload_size / sizeof(uint32_t);
+	int i = 0;
+	for (i = 0; i < wordsize - 1; i++)
+	{
+		parsed_data[i] = ((float)pbi32[i]);
+		//printf("%d ", pbi32[i]);
+	}
+	//printf("\n");
+	parsed_data[i] = ((float)pbu32[i]) / 1000.f;
+
+	*parsed_data_size = wordsize;
+}
+
+
+/*
+* Inputs:
+*	input_buf: raw unstuffed data buffer
+* Outputs:
+*	parsed_data: floats, parsed from input buffer
+* Returns: number of parsed values
+*/
+void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parsed_data, int * parsed_data_size)
+{
+	uint32_t* pbu32 = (uint32_t*)(&input_buf[0]);
+	int32_t* pbi32 = (int32_t*)(&input_buf[0]);
+	int wordsize = payload_size / sizeof(uint32_t);
+	int i = 0;
+	for (i = 0; i < wordsize; i++)
+	{
+		parsed_data[i] = ((float)pbi32[i]);
+		//printf("%d ", pbi32[i]);
+	}
+	//printf("\n");
+	//parsed_data[i] = ((float)pbu32[i]) / 1000.f;
+
+	*parsed_data_size = wordsize;
+}
+
+
+void text_only(int serial_handle)
+{
+	int pld_size = 0;
+	int previous_wordsize = 0;
+	int wordsize = 0;
+	int wordsize_match_count = 0;
+	while (1)
+	{
+		int nb = read(serial_handle, &gl_ser_readbuf, sizeof(gl_ser_readbuf) );
+		for (int i = 0; i < nb; i++)
+		{
+			uint8_t new_byte = gl_ser_readbuf[i];
+			pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
+			if (pld_size > 0)
+			{
+				parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+
+				//obtain consecutive matching counts
+				if (wordsize == previous_wordsize && wordsize > 0)
+				{
+					wordsize_match_count++;
+					for (int fvidx = 0; fvidx < wordsize; fvidx++)
+					{
+						if (gl_options.print_in_parser == 0)
+						{
+							float val = gl_valdump[fvidx]*gl_options.yscale;
+							if (val >= 0)
+								printf("+%0.6f", val);
+							else
+								printf("%0.6f", val);
+							
+							if (fvidx <  (wordsize - 1))
+								printf(", ");
+						}
+					}
+					printf("\n");
+				}
+				else
+				{
+					wordsize_match_count = 0;
+				}
+				previous_wordsize = wordsize;
+			}
+		}
+	}
+}
+
+
+
 //Screen dimension constants
 const int SCREEN_WIDTH = 1200;
 const int SCREEN_HEIGHT = 800;
@@ -38,6 +138,9 @@ const int SCREEN_HEIGHT = 800;
 
 int main(int argc, char *args[])
 {
+
+	parse_args(argc, args, &gl_options);
+	
 	int serial_port = open("/dev/ttyUSB0", O_RDWR);
 	if (serial_port < 0) {
 		printf("Error %i from open: %s\n", errno, strerror(errno));
@@ -77,23 +180,7 @@ int main(int argc, char *args[])
 	ioctl(serial_port, TCSETS2, &tty);
 
 
-	uint64_t tick = 0;
-	while(tick < 0xFFFFFFFF * 5)
-	{
-		int nb = read(serial_port, &gl_ser_readbuf, sizeof(gl_ser_readbuf) );
-		if(nb > 0)
-		{
-			printf("%d bytes: ",nb);
-			for(int i = 0; i < nb; i++)
-			{
-				printf("%c", gl_ser_readbuf[i]);
-			}
-			printf("\r\n");
-		}
-	}
 
-	close(serial_port);
-	return 0;
 
 
 	//The window we'll be rendering to
@@ -151,9 +238,63 @@ int main(int argc, char *args[])
 				/*
 				Get Data over Serial Stream
 				*/
-				uint8_t new_byte = (uint8_t)t;
-				int pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
+				int nb = read(serial_port, &gl_ser_readbuf, sizeof(gl_ser_readbuf) );
+				for(int i = 0; i < nb; i++)
+				{
+					uint8_t new_byte = gl_ser_readbuf[i];
+					int pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
+					if (pld_size > 0)
+					{
+						if (gl_options.xy_mode == 0)
+						{
+							parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+						}
+						else
+						{
+							parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+						}
+						
+						//obtain consecutive matching counts
+						if (wordsize == previous_wordsize && wordsize > 0)
+						{
+							wordsize_match_count++;
+							if (gl_options.print_vals)
+							{
+								for (int fvidx = 0; fvidx < wordsize; fvidx++)
+								{
+									printf("%f, ", gl_valdump[fvidx]*gl_options.yscale);
+								}
+								printf("\n");
+							}
+						}
+						else
+						{
+							wordsize_match_count = 0;
+						}
+						previous_wordsize = wordsize;
+						
 
+						//resize action
+						if(wordsize_match_count >= 100)
+						{
+							int num_lines = 0;
+							if (gl_options.xy_mode == 0)
+							{
+								num_lines = (wordsize - 1);
+							}
+							else
+							{
+								num_lines = wordsize / 2;
+							}
+							if (fpoints_lines.size() != num_lines)
+							{
+								fpoints_lines.resize(num_lines, std::vector<fpoint_t>(dbufsize));
+							}
+
+						}
+					}
+
+				}
 
 				for (int line = 0; line < fpoints_lines.size(); line++)
 				{	
@@ -162,18 +303,55 @@ int main(int argc, char *args[])
 					//retrieve and load all available datapoints here
 					std::vector<fpoint_t>* pFpoints = &fpoints_lines[line];
 
-					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
-					(*pFpoints)[dbufsize - 1].x = sin(t)*100 + 100*(line%2);
-					(*pFpoints)[dbufsize - 1].y = cos(t)*100;
+					float x, y;
+					if (gl_options.xy_mode == 0)
+					{
+						/*Parsing and loading done HERE.
+						* if there is a more complex parsing function, implement it elsewhere and have it return X and Y.
+						*
+						* It should be a function whose input is the unstuffed PPP buffer and whose output is x and y of each line contained in the buffer payload
+						*/
+						x = gl_valdump[fpoints_lines.size()];
+						y = gl_valdump[line];
+					}
+					else
+					{
+						x = gl_valdump[line * 2];
+						y = gl_valdump[(line * 2) + 1];
+					}
 
+					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
+					(*pFpoints)[dbufsize - 1].x = x;
+					(*pFpoints)[dbufsize - 1].y = y;
+
+
+					float div_pixel_size = 0;
+					float div_center = 0;
+					if(gl_options.spread_lines)
+						div_pixel_size = (float)SCREEN_HEIGHT / ((float)fpoints_lines.size());
+					else
+					{
+						div_center = (float)SCREEN_HEIGHT / 2;
+					}
 
 					for (int i = 0; i < points.size(); i++)
 					{
+						if (gl_options.spread_lines)
 						{
-							points[i].x = (int)(((*pFpoints)[i].x)) + SCREEN_WIDTH /  2;
-							points[i].y = (-(int)((*pFpoints)[i].y)) + SCREEN_HEIGHT / 2;	//apply uniform scaling
+							div_center = (div_pixel_size * line) + (div_pixel_size * .5f);	//calculate the center point of the line we're drawing on screen
+						}
+						if (gl_options.xy_mode == 0)
+						{
+							points[i].x = (int)(((*pFpoints)[i].x - (*pFpoints)[0].x) * xscale);
+							points[i].y = SCREEN_HEIGHT - ((int)((*pFpoints)[i].y * gl_options.yscale) + div_center);
+						}
+						else
+						{
+							points[i].x = (int)(((*pFpoints)[i].x) * gl_options.yscale) + SCREEN_WIDTH /  2;
+							points[i].y = (-(int)((*pFpoints)[i].y * gl_options.yscale)) + SCREEN_HEIGHT / 2;	//apply uniform scaling
 						}
 					}
+
 
 					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);
 				}
@@ -203,6 +381,8 @@ int main(int argc, char *args[])
 
 	//Quit SDL subsystems
 	SDL_Quit();
+
+	close(serial_port);
 	
 	return 0;
 }
