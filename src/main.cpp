@@ -94,36 +94,43 @@ void text_only(int serial_handle)
 		for (int i = 0; i < nb; i++)
 		{
 			uint8_t new_byte = gl_ser_readbuf[i];
+			printf("%c",new_byte);
 			pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
 			if (pld_size > 0)
 			{
-				parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+				printf("received %d bytes: ", pld_size);
+				for(int bv = 0; bv < pld_size; bv++)
+				{
+					printf("%c",gl_ppp_payload_buffer[bv]);
+				}
+				printf("\r\n");
+				// parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
 
-				//obtain consecutive matching counts
-				if (wordsize == previous_wordsize && wordsize > 0)
-				{
-					wordsize_match_count++;
-					for (int fvidx = 0; fvidx < wordsize; fvidx++)
-					{
-						if (gl_options.print_in_parser == 0)
-						{
-							float val = gl_valdump[fvidx]*gl_options.yscale;
-							if (val >= 0)
-								printf("+%0.6f", val);
-							else
-								printf("%0.6f", val);
+				// //obtain consecutive matching counts
+				// if (wordsize == previous_wordsize && wordsize > 0)
+				// {
+				// 	wordsize_match_count++;
+				// 	for (int fvidx = 0; fvidx < wordsize; fvidx++)
+				// 	{
+				// 		if (gl_options.print_in_parser == 0)
+				// 		{
+				// 			float val = gl_valdump[fvidx]*gl_options.yscale;
+				// 			if (val >= 0)
+				// 				printf("+%0.6f", val);
+				// 			else
+				// 				printf("%0.6f", val);
 							
-							if (fvidx <  (wordsize - 1))
-								printf(", ");
-						}
-					}
-					printf("\n");
-				}
-				else
-				{
-					wordsize_match_count = 0;
-				}
-				previous_wordsize = wordsize;
+				// 			if (fvidx <  (wordsize - 1))
+				// 				printf(", ");
+				// 		}
+				// 	}
+				// 	printf("\n");
+				// }
+				// else
+				// {
+				// 	wordsize_match_count = 0;
+				// }
+				// previous_wordsize = wordsize;
 			}
 		}
 	}
@@ -170,8 +177,8 @@ int main(int argc, char *args[])
 	tty.c_cflag &= ~CBAUD;
 	tty.c_cflag |= CBAUDEX;
 	// tty.c_cflag |= BOTHER;
-	tty.c_ispeed = 921600;
-	tty.c_ospeed = 921600;
+	tty.c_ispeed = gl_options.baud_rate;
+	tty.c_ospeed = gl_options.baud_rate;
 
 	//timeout=0
 	tty.c_cc[VTIME] = 0;
@@ -179,7 +186,10 @@ int main(int argc, char *args[])
 
 	ioctl(serial_port, TCSETS2, &tty);
 
-
+	if (gl_options.print_only)
+	{
+		text_only(serial_port);
+	}
 
 
 
