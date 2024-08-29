@@ -209,6 +209,7 @@ int main(int argc, char *args[])
 			bool quit = false; 
 			int inc = 0;
 			const int dbufsize = SCREEN_WIDTH*3;
+			// const int dbufsize = 10;
 			std::vector<SDL_Point> points(dbufsize);
 			const int numlines = 2;
 			std::vector<std::vector<fpoint_t>> fpoints_lines(numlines, std::vector<fpoint_t>(dbufsize) );
@@ -224,6 +225,7 @@ int main(int argc, char *args[])
 			int wordsize = 0;
 			int previous_wordsize = 0;
 			int wordsize_match_count = 0;
+			uint32_t num_frames = 0;
 
 			while (quit == false) 
 			{
@@ -287,11 +289,31 @@ int main(int argc, char *args[])
 							if (fpoints_lines.size() != num_lines)
 							{
 								fpoints_lines.resize(num_lines, std::vector<fpoint_t>(dbufsize));
+								printf("resizing to %d lines\r\n", num_lines);
 							}
 
 						}
 					}
 
+				}
+
+
+				{	//obtain a new xscale.
+					//float mintime = 10000000000000.f;
+					//float maxtime = 0.f;
+					//for (int line = 0; line < fpoints_lines.size(); line++)
+					//{
+					//	float max_candidate = fpoints_lines[line][dbufsize - 1].x;
+					//	float min_candidate = fpoints_lines[line][0].x;
+					//	if (max_candidate > maxtime)
+					//		maxtime = max_candidate;
+					//	if (min_candidate < mintime)
+					//		mintime = min_candidate;
+					//}
+					if (gl_options.xy_mode == 0)
+					{
+						xscale = ((float)SCREEN_WIDTH) / (fpoints_lines[0][dbufsize - 1].x - fpoints_lines[0][0].x);
+					}
 				}
 
 				for (int line = 0; line < fpoints_lines.size(); line++)
@@ -317,11 +339,17 @@ int main(int argc, char *args[])
 						x = gl_valdump[line * 2];
 						y = gl_valdump[(line * 2) + 1];
 					}
+					
 
+					// for(int shuffleidx = dbufsize - 2; shuffleidx >= 0; shuffleidx--)
+					// {
+					// 	(*pFpoints)[shuffleidx] = (*pFpoints)[shuffleidx+1];
+					// }
 					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
 					(*pFpoints)[dbufsize - 1].x = x;
 					(*pFpoints)[dbufsize - 1].y = y;
 
+					num_frames++;
 
 					float div_pixel_size = 0;
 					float div_center = 0;
