@@ -10,8 +10,7 @@ and may not be redistributed without written permission.*/
 #include "PPP.h"
 #include "colors.h"
 #include "args-parsing.h"
-#include <SDL_ttf.h>
-
+#include <algorithm>
 
 #define PAYLOAD_SIZE 512
 #define UNSTUFFING_BUFFER_SIZE (PAYLOAD_SIZE * 2 + 2)
@@ -184,14 +183,7 @@ int main(int argc, char* args[])
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
 
-	if (TTF_Init() < 0)
-	{
-		printf("TTL init failed\n");
-	}
-	TTF_Font* font = TTF_OpenFont("ARIAL.TTF", 12);
-	SDL_Color txt_fgColor = { 255, 255, 255, 255 };
 	SDL_Color bgColor = { 10, 10, 10, 255 };
-	SDL_Surface* textSurface = TTF_RenderText_Shaded(font, "Text", txt_fgColor, bgColor);
 
 	//Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
