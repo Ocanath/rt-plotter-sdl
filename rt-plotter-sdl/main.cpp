@@ -173,7 +173,8 @@ int main(int argc, char* args[])
 	}
 	if (found == 0)
 	{
-		printf("No COM ports found\n");
+		if(gl_options.csv_header == 0)
+			printf("No COM ports found\n");
 	}
 	if (gl_options.print_only)
 	{
