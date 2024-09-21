@@ -6,13 +6,14 @@
 
 cmd_options_t gl_options = {
 	0,	//spread lines
-	921600,	//baud rate
-	400.f/(4096.f),	//yscale,
+	230400,	//baud rate
+	1,	//yscale,
 	0,	//print values to console
 	0, //print values to console ONLY (no actual plotting!)
 	0, //print in parser flag active
 	0,	//xy mode
-	0	//csv header
+	0,	//csv header
+	1	//offaxis-encoder
 };
 
 std::string gl_csvheader;
@@ -84,6 +85,11 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 			{
 				popts->xy_mode = 1;
 				sprintf_s(printstr, sizeof(printstr),  "Using xy mode...\r\n");
+			}
+			if (strcmp("--offaxis-encoder", argv[i]) == 0)
+			{
+				popts->offaxis_encoder = 1;
+				sprintf_s(printstr, sizeof(printstr), "Parsing as offaxis encoder\r\n");
 			}
 			if (popts->csv_header == 0)
 			{

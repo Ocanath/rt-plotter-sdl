@@ -98,7 +98,57 @@ void parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data, 
 	*parsed_data_size = wordsize;
 }
 
+#define PLD_SIZE	28	//bytes
+typedef union 
+{
+	uint8_t u8[PLD_SIZE];
+	int16_t i16[PLD_SIZE / sizeof(int16_t)];
+}packed_sensor_data_t;
+packed_sensor_data_t gl_tx_buf = { 0 };
 
+
+void offaxis_encoder_parser(HANDLE* pSer)
+{
+	int pld_size = 0;
+	while (1)
+	{
+		LPDWORD num_bytes_read = 0;
+		pld_size = 0;
+		int rc = ReadFile(*pSer, gl_ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
+		for (int i = 0; i < (int)num_bytes_read; i++)
+		{
+			uint8_t new_byte = gl_ser_readbuf[i];
+			pld_size = parse_PPP_stream(new_byte, gl_tx_buf.u8, sizeof(packed_sensor_data_t), gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
+			if (pld_size > 0)
+			{
+				//for (int i = 0; i < pld_size; i++)
+				//{
+				//	printf("%.2X", gl_tx_buf.u8[i]);
+				//}
+				//printf("\n");
+				float rawtemp = gl_tx_buf.i16[6];
+				float mV = ((rawtemp * 3.3f) / 4096.f)*1000.f;
+				float Temp = (5.f / 44.f) * ((5.f * sqrt(9111265.f - 1760.f * mV)) - 13501.f);
+
+				printf("Temperature C = %f\n", Temp);
+			}
+		}
+	}
+}
+void parse_PPP_offaxis_encoder(uint8_t * input_buf, int payload_size, float * parsed_data, int* parsed_data_size)
+{
+	if (payload_size <= sizeof(packed_sensor_data_t))
+	{
+		packed_sensor_data_t* pData = (packed_sensor_data_t*)(&input_buf[0]);
+		float rawtemp = pData->i16[6];
+		float mV = ((rawtemp * 3.3f) / 4096.f) * 1000.f;
+		float Temp = (5.f / 44.f) * ((5.f * sqrt(9111265.f - 1760.f * mV)) - 13501.f);
+		parsed_data[0] = Temp;
+		parsed_data[1] = ((float)SDL_GetTicks64()) / 1000.f;
+		*parsed_data_size = 2;
+		//printf("Temperature C = %f, Time = %f\n", parsed_data[0], parsed_data[1]);
+	}
+}
 
 void text_only(HANDLE*pSer)
 {
@@ -153,7 +203,6 @@ void text_only(HANDLE*pSer)
 int main(int argc, char* args[])
 {
 	parse_args(argc, args, &gl_options);
-
 	HANDLE serialport;
 	char namestr[16] = { 0 };
 	uint8_t found = 0;
@@ -178,7 +227,9 @@ int main(int argc, char* args[])
 	}
 	if (gl_options.print_only)
 	{
-		text_only(&serialport);
+		printf("Starting parser\n");
+		offaxis_encoder_parser(&serialport);
+		//text_only(&serialport);
 	}
 
 	//The window we'll be rendering to
@@ -251,7 +302,11 @@ int main(int argc, char* args[])
 						{
 							parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
 						}
-						
+						if (gl_options.offaxis_encoder)
+						{
+							parse_PPP_offaxis_encoder(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+						}
+
 						//obtain consecutive matching counts
 						if (wordsize == previous_wordsize && wordsize > 0)
 						{
