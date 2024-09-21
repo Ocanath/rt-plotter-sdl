@@ -135,6 +135,9 @@ void offaxis_encoder_parser(HANDLE* pSer)
 		}
 	}
 }
+
+uint32_t parsecouter = 0;
+const uint32_t num_samples_to_skip_plotting = 100;
 void parse_PPP_offaxis_encoder(uint8_t * input_buf, int payload_size, float * parsed_data, int* parsed_data_size)
 {
 	if (payload_size <= sizeof(packed_sensor_data_t))
@@ -145,6 +148,7 @@ void parse_PPP_offaxis_encoder(uint8_t * input_buf, int payload_size, float * pa
 		float Temp = (5.f / 44.f) * ((5.f * sqrt(9111265.f - 1760.f * mV)) - 13501.f);
 		parsed_data[0] = Temp;
 		parsed_data[1] = ((float)SDL_GetTicks64()) / 1000.f;
+		parsed_data[0] = 100 * sin(parsed_data[1]);
 		*parsed_data_size = 2;
 		//printf("Temperature C = %f, Time = %f\n", parsed_data[0], parsed_data[1]);
 	}
@@ -284,7 +288,7 @@ int main(int argc, char* args[])
 				SDL_RenderClear(pRenderer);
 
 
-
+				uint8_t new_pkt = 0;
 				LPDWORD num_bytes_read = 0;
 				pld_size = 0;
 				int rc = ReadFile(serialport, gl_ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
@@ -294,19 +298,29 @@ int main(int argc, char* args[])
 					pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
 					if (pld_size > 0)
 					{
-						if (gl_options.xy_mode == 0)
+
+						if (gl_options.offaxis_encoder)
 						{
-							parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+							parsecouter++;
+							if (parsecouter >= 10)
+							{
+								parsecouter = 0;
+
+								parse_PPP_offaxis_encoder(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+								new_pkt = 1;
+							}
 						}
 						else
 						{
-							parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+							if (gl_options.xy_mode == 0)
+							{
+								parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+							}
+							else
+							{
+								parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+							}
 						}
-						if (gl_options.offaxis_encoder)
-						{
-							parse_PPP_offaxis_encoder(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
-						}
-
 						//obtain consecutive matching counts
 						if (wordsize == previous_wordsize && wordsize > 0)
 						{
@@ -366,7 +380,6 @@ int main(int argc, char* args[])
 					}
 				}
 
-
 				for (int line = 0; line < fpoints_lines.size(); line++)
 				{	
 					SDL_SetRenderDrawColor(pRenderer, template_colors[line % NUM_COLORS].r, template_colors[line % NUM_COLORS].g, template_colors[line % NUM_COLORS].b, 255);
@@ -374,28 +387,29 @@ int main(int argc, char* args[])
 					//retrieve and load all available datapoints here
 					std::vector<fpoint_t>* pFpoints = &fpoints_lines[line];
 
-
-					float x, y;
-					if (gl_options.xy_mode == 0)
+					if (new_pkt)
 					{
-						/*Parsing and loading done HERE.
-						* if there is a more complex parsing function, implement it elsewhere and have it return X and Y.
-						*
-						* It should be a function whose input is the unstuffed PPP buffer and whose output is x and y of each line contained in the buffer payload
-						*/
-						x = gl_valdump[fpoints_lines.size()];
-						y = gl_valdump[line];
-					}
-					else
-					{
-						x = gl_valdump[line * 2];
-						y = gl_valdump[(line * 2) + 1];
-					}
-					
-					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
-					(*pFpoints)[dbufsize - 1].x = x;
-					(*pFpoints)[dbufsize - 1].y = y;
+						float x, y;
+						if (gl_options.xy_mode == 0)
+						{
+							/*Parsing and loading done HERE.
+							* if there is a more complex parsing function, implement it elsewhere and have it return X and Y.
+							*
+							* It should be a function whose input is the unstuffed PPP buffer and whose output is x and y of each line contained in the buffer payload
+							*/
+							x = gl_valdump[fpoints_lines.size()];
+							y = gl_valdump[line];
+						}
+						else
+						{
+							x = gl_valdump[line * 2];
+							y = gl_valdump[(line * 2) + 1];
+						}
 
+						std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
+						(*pFpoints)[dbufsize - 1].x = x;
+						(*pFpoints)[dbufsize - 1].y = y;
+					}
 
 					float div_pixel_size = 0;
 					float div_center = 0;
