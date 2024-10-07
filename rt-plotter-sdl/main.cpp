@@ -148,11 +148,56 @@ void parse_PPP_offaxis_encoder(uint8_t * input_buf, int payload_size, float * pa
 		float Temp = (5.f / 44.f) * ((5.f * sqrt(9111265.f - 1760.f * mV)) - 13501.f);
 		parsed_data[0] = Temp;
 		parsed_data[1] = ((float)SDL_GetTicks64()) / 1000.f;
-		parsed_data[0] = 100 * sin(parsed_data[1]);
 		*parsed_data_size = 2;
 		//printf("Temperature C = %f, Time = %f\n", parsed_data[0], parsed_data[1]);
 	}
 }
+/*
+ * Load packed 12 bit values located in an 8bit array into
+ * an unpacked (zero padded) 16 bit array. FSR utility function
+ */
+void unpack_8bit_into_12bit(uint8_t* arr, uint16_t* vals, int valsize)
+{
+	for (int i = 0; i < valsize; i++)
+		vals[i] = 0;	//clear the buffer before loading it with |=
+	for (int bidx = valsize * 12 - 4; bidx >= 0; bidx -= 4)
+	{
+		int validx = bidx / 12;
+		int arridx = bidx / 8;
+		int shift_val = (bidx % 8);
+		vals[validx] |= ((arr[arridx] >> shift_val) & 0x0F) << (bidx % 12);
+	}
+}
+#define NUM_FSR_PER_FINGER 6
+
+/*Packing structure for de-compressed FSRs*/
+typedef union
+{
+	uint8_t d[sizeof(uint16_t) * NUM_FSR_PER_FINGER];
+	uint16_t v[NUM_FSR_PER_FINGER];
+}fsr_fmt_t;
+
+void parse_PPP_fsr_sensor(uint8_t* input_buf, int payload_size, float* parsed_data, int* parsed_data_size)
+{
+	//for (int i = 0; i < payload_size; i++)
+ //	{
+	//	printf("%X ", input_buf[i]);
+	//}
+	//printf("\r\n");
+
+	fsr_fmt_t fmt = { 0 };
+	unpack_8bit_into_12bit(input_buf, fmt.v, NUM_FSR_PER_FINGER);
+	int i = 0;
+	for (i = 0; i < NUM_FSR_PER_FINGER; i++)
+	{
+		parsed_data[i] = (float)fmt.v[i];
+		printf("%f, ", parsed_data[i]);
+	}
+	printf("\r\n");
+	parsed_data[i++] = ((float)SDL_GetTicks64()) / 1000.f;
+	*parsed_data_size = i;
+}
+
 
 void text_only(HANDLE*pSer)
 {
@@ -302,7 +347,7 @@ int main(int argc, char* args[])
 						if (gl_options.offaxis_encoder)
 						{
 							parsecouter++;
-							if (parsecouter >= 10)
+							if (parsecouter >= 100)
 							{
 								parsecouter = 0;
 
@@ -310,15 +355,22 @@ int main(int argc, char* args[])
 								new_pkt = 1;
 							}
 						}
+						else if (gl_options.fsr_sensor)
+						{
+							parse_PPP_fsr_sensor(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+							new_pkt = 1;
+						}
 						else
 						{
 							if (gl_options.xy_mode == 0)
 							{
 								parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+								new_pkt = 1;
 							}
 							else
 							{
 								parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+								new_pkt = 1;
 							}
 						}
 						//obtain consecutive matching counts
@@ -329,9 +381,11 @@ int main(int argc, char* args[])
 							{
 								for (int fvidx = 0; fvidx < wordsize; fvidx++)
 								{
-									printf("%f, ", gl_valdump[fvidx]*gl_options.yscale);
+									if(fvidx < wordsize-1)
+										printf("%f, ", gl_valdump[fvidx]*gl_options.yscale);
+									else
+										printf("%f\n", gl_valdump[fvidx] * gl_options.yscale);
 								}
-								printf("\n");
 							}
 						}
 						else

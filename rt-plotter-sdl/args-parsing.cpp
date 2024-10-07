@@ -7,13 +7,14 @@
 cmd_options_t gl_options = {
 	0,	//spread lines
 	230400,	//baud rate
-	1,	//yscale,
+	0.1,	//yscale,
 	0,	//print values to console
 	0, //print values to console ONLY (no actual plotting!)
 	0, //print in parser flag active
 	0,	//xy mode
 	0,	//csv header
-	1	//offaxis-encoder
+	0,	//offaxis-encoder
+	1	//fsr-sensor
 };
 
 std::string gl_csvheader;
