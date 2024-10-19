@@ -21,6 +21,8 @@ and may not be redistributed without written permission.*/
 #pragma comment(lib,"ws2_32.lib") //Winsock Library
 
 
+enum { POSITION = 0xFA, TURBO = 0xFB, STEALTH = 0xFC };
+
 #define PAYLOAD_SIZE 512
 #define UNSTUFFING_BUFFER_SIZE (PAYLOAD_SIZE * 2 + 2)
 
@@ -96,23 +98,6 @@ int main(int argc, char* args[])
 	//TODO: auto address discovery with WHO_GOES_THERE
 	inet_pton(AF_INET, "192.168.123.86", &client.si_other.sin_addr);
 
-	uint8_t pld[32] = { 0 };
-	uint16_t* pu16 = (uint16_t*)(&pld[0]);
-	int i = 0;
-	pld[i++] = 'h';
-	pld[i++] = 'e';
-	pld[i++] = 'l';
-	pld[i++] = 'l';
-	pld[i++] = 'o';
-	int chkidx = (i + (i % 2))/2;	//pad a +1 byte if it's odd, divide by 2, set that as the start of our 16bit checksum
-	pu16[chkidx] = fletchers_checksum16(pu16, chkidx);
-	int pld_size = chkidx * sizeof(uint16_t);
-	int stuffed_size = PPP_stuff(pld, pld_size, gl_ppp_stuffing_buffer, sizeof(gl_ppp_stuffing_buffer));
-	sendto(client.s, (const char *)gl_ppp_stuffing_buffer, stuffed_size, 0, (struct sockaddr*)&client.si_other, client.slen);
-	closesocket(client.s);
-	WSACleanup();
-	return 0;
-
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
 
@@ -160,6 +145,7 @@ int main(int argc, char* args[])
 			int prev_mouse_y = SCREEN_HEIGHT / 2;
 			int32_t accum_mouse_x = 0;
 			int32_t accum_mouse_y = 0;
+			int32_t forward = 0;
 			SDL_WarpMouseInWindow(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 			while (quit == false) 
 			{
@@ -176,10 +162,32 @@ int main(int argc, char* args[])
 				accum_mouse_x = wrap_2pi_14b( (accum_mouse_x + (mouse_x - prev_mouse_x)* gain_x) );
 				accum_mouse_y = wrap_2pi_14b( ( accum_mouse_y + (mouse_y - prev_mouse_y)* gain_y) );
 				accum_mouse_y = symm_thresh(accum_mouse_y, PI_14B / 4);
-				int32_t gx = wrap_2pi_14b(accum_mouse_x);
+				int32_t w1 = wrap_2pi_14b(accum_mouse_x + forward);
+				int32_t w2 = wrap_2pi_14b(accum_mouse_x - forward);
 				int32_t gy = wrap_2pi_14b(accum_mouse_y);
-				printf("%f,%f\n", (float)gx*(180.f/(float)PI_14B), (float)gy*(180.f/(float)PI_14B));
+				printf("%f, %f, %f\n", (float)w1*(180.f/(float)PI_14B), (float)w2 * (180.f / (float)PI_14B), (float)gy*(180.f/(float)PI_14B));
 				SDL_WarpMouseInWindow(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+
+				uint8_t pld[32] = { 0 };
+				uint16_t* pu16 = (uint16_t*)(&pld[0]);
+				int i = 0;
+				pld[i++] = POSITION;
+				pld[i++] = 0;
+				
+				int32_t* p_cmd32 = (int32_t *)(& pld[i]);
+				p_cmd32[0] = w1;
+				i += sizeof(int32_t);
+				p_cmd32[1] = w2;
+				i += sizeof(int32_t);
+				p_cmd32[2] = gy;
+				i += sizeof(int32_t);
+
+				int chkidx = (i + (i % 2)) / 2;	//pad a +1 byte if it's odd, divide by 2, set that as the start of our 16bit checksum
+				pu16[chkidx] = fletchers_checksum16(pu16, chkidx);
+				chkidx++;
+				int pld_size = chkidx * sizeof(uint16_t);
+				int stuffed_size = PPP_stuff(pld, pld_size, gl_ppp_stuffing_buffer, sizeof(gl_ppp_stuffing_buffer));
+				sendto(client.s, (const char*)gl_ppp_stuffing_buffer, stuffed_size, 0, (struct sockaddr*)&client.si_other, client.slen);
 
 
 				uint8_t new_pkt = 0;
@@ -275,6 +283,9 @@ int main(int argc, char* args[])
 
 	//Quit SDL subsystems
 	SDL_Quit();
+
+	closesocket(client.s);
+	WSACleanup();
 
 	return 0;
 }
