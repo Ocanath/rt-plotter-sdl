@@ -13,7 +13,7 @@ class WinUdpClient
 public:
 	struct sockaddr_in si_other;
 	struct sockaddr_in si_us;
-	int s;
+	SOCKET s;
 	int slen;
 	WSADATA wsa;
 	WinUdpClient(uint16_t port)

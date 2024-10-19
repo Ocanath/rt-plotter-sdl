@@ -37,6 +37,7 @@ typedef struct fpoint_t
 static int gl_ppp_bidx = 0;
 static uint8_t gl_ppp_payload_buffer[PAYLOAD_SIZE] = { 0 };	//buffer
 static uint8_t gl_ppp_unstuffing_buffer[UNSTUFFING_BUFFER_SIZE] = { 0 };
+static uint8_t gl_ppp_stuffing_buffer[PAYLOAD_SIZE] = { 0 };
 static uint8_t gl_ser_readbuf[512] = { 0 };
 static float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
 
@@ -52,6 +53,22 @@ uint32_t fletchers_checksum32(uint32_t* arr, int size)
 	for (int i = 0; i < size; i++)
 	{
 		checksum += (int32_t)arr[i];
+		fchk += checksum;
+	}
+	return fchk;
+}
+
+/*
+Generic hex checksum calculation.
+TODO: use this in the psyonic API
+*/
+uint16_t fletchers_checksum16(uint16_t* arr, int size)
+{
+	int16_t checksum = 0;
+	int16_t fchk = 0;
+	for (int i = 0; i < size; i++)
+	{
+		checksum += (int16_t)arr[i];
 		fchk += checksum;
 	}
 	return fchk;
@@ -73,6 +90,28 @@ int main(int argc, char* args[])
 	parse_args(argc, args, &gl_options);
 
 	WinUdpClient client(6701);
+	client.set_nonblocking();
+	client.si_other.sin_family = AF_INET;
+	//client.si_other.sin_addr.S_un.S_addr = inet_addr("192.168.123.255");
+	//TODO: auto address discovery with WHO_GOES_THERE
+	inet_pton(AF_INET, "192.168.123.86", &client.si_other.sin_addr);
+
+	uint8_t pld[32] = { 0 };
+	uint16_t* pu16 = (uint16_t*)(&pld[0]);
+	int i = 0;
+	pld[i++] = 'h';
+	pld[i++] = 'e';
+	pld[i++] = 'l';
+	pld[i++] = 'l';
+	pld[i++] = 'o';
+	int chkidx = (i + (i % 2))/2;	//pad a +1 byte if it's odd, divide by 2, set that as the start of our 16bit checksum
+	pu16[chkidx] = fletchers_checksum16(pu16, chkidx);
+	int pld_size = chkidx * sizeof(uint16_t);
+	int stuffed_size = PPP_stuff(pld, pld_size, gl_ppp_stuffing_buffer, sizeof(gl_ppp_stuffing_buffer));
+	sendto(client.s, (const char *)gl_ppp_stuffing_buffer, stuffed_size, 0, (struct sockaddr*)&client.si_other, client.slen);
+	closesocket(client.s);
+	WSACleanup();
+	return 0;
 
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
