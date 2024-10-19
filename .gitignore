@@ -7,3 +7,4 @@ enc_temp_folder
 tmp-workspace/
 ***/__pycache__/
 Python/DataLogging/*.csv
+build/
