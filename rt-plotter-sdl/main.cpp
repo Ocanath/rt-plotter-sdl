@@ -4,6 +4,10 @@ and may not be redistributed without written permission.*/
 //Using SDL and standard IO
 #include <SDL.h>
 #include <stdio.h>
+#include<winsock2.h>
+#include <WS2tcpip.h>
+#include "WinUdpClient.h"
+
 #include <math.h>
 #include <vector>
 #include "winserial.h"
@@ -11,6 +15,11 @@ and may not be redistributed without written permission.*/
 #include "colors.h"
 #include "args-parsing.h"
 #include <algorithm>
+#include "trig_fixed.h"
+
+
+#pragma comment(lib,"ws2_32.lib") //Winsock Library
+
 
 #define PAYLOAD_SIZE 512
 #define UNSTUFFING_BUFFER_SIZE (PAYLOAD_SIZE * 2 + 2)
@@ -48,32 +57,22 @@ uint32_t fletchers_checksum32(uint32_t* arr, int size)
 	return fchk;
 }
 
+
+/*Value clamping symmetric about zero*/
+int32_t symm_thresh(int32_t sig, int32_t thresh)
+{
+	if (sig > thresh)
+		sig = thresh;
+	if (sig < -thresh)
+		sig = -thresh;
+	return sig;
+}
+
 int main(int argc, char* args[])
 {
 	parse_args(argc, args, &gl_options);
-	HANDLE serialport;
-	char namestr[16] = { 0 };
-	uint8_t found = 0;
-	for (int i = 0; i < 255; i++)
-	{
-		int rl = sprintf_s(namestr, "\\\\.\\COM%d", i);
-		int rc = connect_to_usb_serial(&serialport, namestr, gl_options.baud_rate);
-		if (rc != 0)
-		{
-			if (!(gl_options.csv_header == 1 && (gl_options.print_only == 1 || gl_options.print_in_parser == 1)))
-			{
-				printf("Connected to COM port %s successfully\n", namestr);
-			}
-			found = 1;
-			break;
-		}
-	}
-	if (found == 0)
-	{
-		if(gl_options.csv_header == 0)
-			printf("No COM ports found\n");
-	}
 
+	WinUdpClient client(6701);
 
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
@@ -133,30 +132,22 @@ int main(int argc, char* args[])
 
 				int mouse_x, mouse_y;
 				SDL_GetMouseState(&mouse_x, &mouse_y);
-				accum_mouse_x += mouse_x - prev_mouse_x;
-				accum_mouse_y += mouse_y - prev_mouse_y;
-				printf("%d,%d\n", accum_mouse_x, accum_mouse_y);
+				int32_t gain_x = 10;
+				int32_t gain_y = 10;
+				accum_mouse_x = wrap_2pi_14b( (accum_mouse_x + (mouse_x - prev_mouse_x)* gain_x) );
+				accum_mouse_y = wrap_2pi_14b( ( accum_mouse_y + (mouse_y - prev_mouse_y)* gain_y) );
+				accum_mouse_y = symm_thresh(accum_mouse_y, PI_14B / 4);
+				int32_t gx = wrap_2pi_14b(accum_mouse_x);
+				int32_t gy = wrap_2pi_14b(accum_mouse_y);
+				printf("%f,%f\n", (float)gx*(180.f/(float)PI_14B), (float)gy*(180.f/(float)PI_14B));
 				SDL_WarpMouseInWindow(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
 
 				uint8_t new_pkt = 0;
 
-				{	//obtain a new xscale.
-					//float mintime = 10000000000000.f;
-					//float maxtime = 0.f;
-					//for (int line = 0; line < fpoints_lines.size(); line++)
-					//{
-					//	float max_candidate = fpoints_lines[line][dbufsize - 1].x;
-					//	float min_candidate = fpoints_lines[line][0].x;
-					//	if (max_candidate > maxtime)
-					//		maxtime = max_candidate;
-					//	if (min_candidate < mintime)
-					//		mintime = min_candidate;
-					//}
-					if (gl_options.xy_mode == 0)
-					{
-						xscale = ((float)SCREEN_WIDTH) / (fpoints_lines[0][dbufsize - 1].x - fpoints_lines[0][0].x);
-					}
+				if (gl_options.xy_mode == 0)
+				{
+					xscale = ((float)SCREEN_WIDTH) / (fpoints_lines[0][dbufsize - 1].x - fpoints_lines[0][0].x);
 				}
 
 				for (int line = 0; line < fpoints_lines.size(); line++)
@@ -246,7 +237,5 @@ int main(int argc, char* args[])
 	//Quit SDL subsystems
 	SDL_Quit();
 
-	//close serial port
-	CloseHandle(serialport);
 	return 0;
 }

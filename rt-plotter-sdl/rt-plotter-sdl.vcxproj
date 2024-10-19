@@ -149,14 +149,17 @@
     <ClCompile Include="colors.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PPP.cpp" />
+    <ClCompile Include="trig_fixed.cpp" />
     <ClCompile Include="winserial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="args-parsing.h" />
     <ClInclude Include="colors.h" />
+    <ClInclude Include="trig_fixed.h" />
     <ClInclude Include="u32_fmt_t.h" />
     <ClInclude Include="PPP.h" />
     <ClInclude Include="winserial.h" />
+    <ClInclude Include="WinUdpClient.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
