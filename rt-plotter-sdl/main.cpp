@@ -92,11 +92,17 @@ int main(int argc, char* args[])
 	parse_args(argc, args, &gl_options);
 
 	WinUdpClient client(6701);
+	struct sockaddr_in server;
+	server.sin_family = AF_INET;
+	server.sin_addr = in4addr_any;
+	server.sin_port = htons(6701);
 	client.set_nonblocking();
 	client.si_other.sin_family = AF_INET;
 	//client.si_other.sin_addr.S_un.S_addr = inet_addr("192.168.123.255");
 	//TODO: auto address discovery with WHO_GOES_THERE
 	inet_pton(AF_INET, "192.168.123.86", &client.si_other.sin_addr);
+	sendto(client.s, (const char*)"SPAM_ME", 7, 0, (struct sockaddr*)&client.si_other, client.slen);
+	bind(client.s, (struct sockaddr*)&server, sizeof(server));
 
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
