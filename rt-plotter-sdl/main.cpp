@@ -130,7 +130,7 @@ int main(int argc, char* args[])
 			int prev_mouse_y = SCREEN_HEIGHT / 2;
 			int32_t accum_mouse_x = 0;
 			int32_t accum_mouse_y = 0;
-			int32_t forward = 0;
+			double forward = 0;
 
 			SDL_WarpMouseInWindow(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
@@ -166,18 +166,24 @@ int main(int argc, char* args[])
 				accum_mouse_x = ( (accum_mouse_x + (mouse_x - prev_mouse_x)* gain_x) );
 				accum_mouse_y = ( ( accum_mouse_y + (mouse_y - prev_mouse_y)* gain_y) );
 				accum_mouse_y = symm_thresh(accum_mouse_y, PI_14B / 2);
-				int32_t w1 = (accum_mouse_x + forward);
-				int32_t w2 = (accum_mouse_x - forward);
+				int32_t w1 = (accum_mouse_x + (int32_t)forward);
+				int32_t w2 = (accum_mouse_x - (int32_t)forward);
 				int32_t gy = wrap_2pi_14b(accum_mouse_y);
 				
 
 				if (keys[SDLK_w])
 				{
-					forward += delta;
+					double dt = (double)(tick - w_ts) * 0.001;
+					if (dt > 3.0)
+						dt = 3.0;
+					forward += (double)delta * dt;
 				}
 				if (keys[SDLK_s])
 				{
-					forward -= delta;
+					double dt = (double)(tick - s_ts) * 0.001;
+					if (dt > 3.0)
+						dt = 3.0;
+					forward -= (double)delta * dt;
 				}
 				if (keys[SDLK_w] == true && w_pressed_prev == false)
 				{
