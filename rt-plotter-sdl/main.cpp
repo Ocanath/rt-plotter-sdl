@@ -141,11 +141,11 @@ int main(int argc, char* args[])
 				SDL_GetMouseState(&mouse_x, &mouse_y);
 				int32_t gain_x = 10;
 				int32_t gain_y = 10;
-				accum_mouse_x = wrap_2pi_14b( (accum_mouse_x + (mouse_x - prev_mouse_x)* gain_x) );
-				accum_mouse_y = wrap_2pi_14b( ( accum_mouse_y + (mouse_y - prev_mouse_y)* gain_y) );
-				accum_mouse_y = symm_thresh(accum_mouse_y, PI_14B / 4);
-				int32_t w1 = wrap_2pi_14b(accum_mouse_x + forward);
-				int32_t w2 = wrap_2pi_14b(accum_mouse_x - forward);
+				accum_mouse_x = ( (accum_mouse_x + (mouse_x - prev_mouse_x)* gain_x) );
+				accum_mouse_y = ( ( accum_mouse_y + (mouse_y - prev_mouse_y)* gain_y) );
+				accum_mouse_y = symm_thresh(accum_mouse_y, PI_14B / 2);
+				int32_t w1 = (accum_mouse_x + forward);
+				int32_t w2 = (accum_mouse_x - forward);
 				int32_t gy = wrap_2pi_14b(accum_mouse_y);
 				printf("%f, %f, %f\n", (float)w1*(180.f/(float)PI_14B), (float)w2 * (180.f / (float)PI_14B), (float)gy*(180.f/(float)PI_14B));
 				SDL_WarpMouseInWindow(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
