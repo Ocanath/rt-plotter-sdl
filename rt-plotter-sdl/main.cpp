@@ -161,7 +161,7 @@ int main(int argc, char* args[])
 
 				int mouse_x, mouse_y;
 				SDL_GetMouseState(&mouse_x, &mouse_y);
-				int32_t gain_x = 10;
+				int32_t gain_x = 20;
 				int32_t gain_y = 10;
 				accum_mouse_x = ( (accum_mouse_x + (mouse_x - prev_mouse_x)* gain_x) );
 				accum_mouse_y = ( ( accum_mouse_y + (mouse_y - prev_mouse_y)* gain_y) );
@@ -170,19 +170,19 @@ int main(int argc, char* args[])
 				int32_t w2 = (accum_mouse_x - (int32_t)forward);
 				int32_t gy = wrap_2pi_14b(accum_mouse_y);
 				
-
+				double accel_thresh = 10.0;
 				if (keys[SDLK_w])
 				{
-					double dt = (double)(tick - w_ts) * 0.001;
-					if (dt > 3.0)
-						dt = 3.0;
+					double dt = (double)(tick - w_ts) * 0.07;
+					if (dt > accel_thresh)
+						dt = accel_thresh;
 					forward += (double)delta * dt;
 				}
 				if (keys[SDLK_s])
 				{
-					double dt = (double)(tick - s_ts) * 0.001;
-					if (dt > 3.0)
-						dt = 3.0;
+					double dt = (double)(tick - s_ts) * 0.07;
+					if (dt > accel_thresh)
+						dt = accel_thresh;
 					forward -= (double)delta * dt;
 				}
 				if (keys[SDLK_w] == true && w_pressed_prev == false)
