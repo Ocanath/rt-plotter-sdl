@@ -172,21 +172,21 @@ int main(int argc, char* args[])
 				accum_mouse_x = ( (accum_mouse_x + (mouse_x - prev_mouse_x)* gain_x) );
 				accum_mouse_y = ( ( accum_mouse_y + (mouse_y - prev_mouse_y)* gain_y) );
 				accum_mouse_y = symm_thresh(accum_mouse_y, PI_14B / 2);
-				int32_t w1 = (accum_mouse_x + (int32_t)forward);
-				int32_t w2 = (accum_mouse_x - (int32_t)forward);
+				int32_t w1 = (-accum_mouse_x + (int32_t)forward);
+				int32_t w2 = (-accum_mouse_x - (int32_t)forward);
 				int32_t gy = wrap_2pi_14b(accum_mouse_y);
 				
 				double accel_thresh = 10.0;
 				if (keys[SDLK_w])
 				{
-					double dt = (double)(tick - w_ts) * 0.07;
+					double dt = (double)(tick - w_ts) * 0.001;
 					if (dt > accel_thresh)
 						dt = accel_thresh;
 					forward += (double)delta * dt;
 				}
 				if (keys[SDLK_s])
 				{
-					double dt = (double)(tick - s_ts) * 0.07;
+					double dt = (double)(tick - s_ts) * 0.001;
 					if (dt > accel_thresh)
 						dt = accel_thresh;
 					forward -= (double)delta * dt;
