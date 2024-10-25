@@ -155,6 +155,8 @@ int main(int argc, char* args[])
 			bool s_pressed_prev = false;
 			int zerocount = 0;
 			uint64_t mouse_activity_ts = 0;
+			uint64_t print_ts = 0;
+			int32_t deltax_lastvalid = 0;
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -195,32 +197,30 @@ int main(int argc, char* args[])
 
 				int mouse_x, mouse_y;
 				SDL_GetMouseState(&mouse_x, &mouse_y);
-				int32_t gain_x = 20;
-				int32_t gain_y = 10;
+				int32_t gain_x = 3;
+				int32_t gain_y = 20;
 				int32_t deltax = (mouse_x - prev_mouse_x)* gain_x;
 				int32_t deltay = (mouse_y - prev_mouse_y) * gain_y;
 
 				accum_mouse_x = ( (accum_mouse_x + deltax) );
 				accum_mouse_y = ( ( accum_mouse_y + deltay) );
 				accum_mouse_y = symm_thresh(accum_mouse_y, PI_14B / 2);
-				int32_t w1 = (deltax + (int32_t)forward);
-				int32_t w2 = (deltax - (int32_t)forward);
-				int32_t gy = wrap_2pi_14b(accum_mouse_y);
 				
-				double accel_thresh = 10.0;
+				double accel_thresh = 100.0;
+				double rate_scale = 0.5;
 				if (keys[SDLK_w])
 				{
-					double dt = (double)(tick - w_ts) * 0.001;
+					double dt = (double)(tick - w_ts)* rate_scale;
 					if (dt > accel_thresh)
 						dt = accel_thresh;
-					forward = dt*1000;
+					forward = dt;
 				}
 				if (keys[SDLK_s])
 				{
-					double dt = (double)(tick - s_ts) * 0.001;
+					double dt = (double)(tick - s_ts) * rate_scale;
 					if (dt > accel_thresh)
 						dt = accel_thresh;
-					forward = -dt*1000;
+					forward = -dt;
 				}
 				if (keys[SDLK_w] == false && keys[SDLK_s] == false)
 				{
@@ -239,8 +239,19 @@ int main(int argc, char* args[])
 				
 				if (mouse_motion != 0 || (tick - mouse_activity_ts) > 10)
 				{
-					printf("%f, %f, %f, %d\n", (float)w1, (float)w2, (float)gy * (180.f / (float)PI_14B));
+					deltax_lastvalid = deltax;
 				}
+
+				int32_t w1 = (-deltax_lastvalid + (int32_t)forward);
+				int32_t w2 = (-deltax_lastvalid - (int32_t)forward);
+				int32_t gy = wrap_2pi_14b(accum_mouse_y);
+				
+				if ( (tick - print_ts) > 50)
+				{
+					printf("%f, %f, %f\n", (float)w1, (float)w2, (float)gy * (180.f / (float)PI_14B));
+					print_ts = tick;
+				}
+
 				SDL_WarpMouseInWindow(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
 				uint8_t pld[32] = { 0 };
