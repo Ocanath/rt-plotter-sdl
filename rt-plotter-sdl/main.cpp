@@ -101,7 +101,7 @@ int main(int argc, char* args[])
 	//client.si_other.sin_addr.S_un.S_addr = inet_addr("192.168.123.255");
 	//TODO: auto address discovery with WHO_GOES_THERE
 	inet_pton(AF_INET, "192.168.123.86", &client.si_other.sin_addr);
-	sendto(client.s, (const char*)"SPAM_ME", 7, 0, (struct sockaddr*)&client.si_other, client.slen);
+	//sendto(client.s, (const char*)"SPAM_ME", 7, 0, (struct sockaddr*)&client.si_other, client.slen);
 	bind(client.s, (struct sockaddr*)&server, sizeof(server));
 
 	//The window we'll be rendering to
@@ -197,7 +197,7 @@ int main(int argc, char* args[])
 
 				int mouse_x, mouse_y;
 				SDL_GetMouseState(&mouse_x, &mouse_y);
-				int32_t gain_x = 3;
+				int32_t gain_x = 5;
 				int32_t gain_y = 20;
 				int32_t deltax = (mouse_x - prev_mouse_x)* gain_x;
 				int32_t deltay = (mouse_y - prev_mouse_y) * gain_y;
