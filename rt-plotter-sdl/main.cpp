@@ -224,56 +224,39 @@ int main(int argc, char* args[])
 				accum_mouse_y = symm_thresh(accum_mouse_y, PI_14B / 2);
 				
 				double accel_thresh = 200.0;
-				double rate_scale = 0.25;
-				double decel_factor = 4.0;
+				double rate_scale = 0.75;
+				double decel_factor = 2.0;
 				if (throttle)
 				{
 					accel_thresh = 1000.0;
-					rate_scale = 0.3;
+					rate_scale = 0.6;
 					throttle_forward = forward;
 				}
-				if (prev_throttle == 1 && throttle == 0)
-				{
-					throttle_stop_ts = tick;
-				}
-				prev_throttle = throttle;
 
-
+				double dt = (double)delta*.001;
 				if (keys[SDLK_w])
 				{
-					double dt = (double)(tick - w_ts)* rate_scale;
-					if (dt > accel_thresh)
-						dt = accel_thresh;
-					forward = dt;
-					forward_when_key_released = forward;
+					forward += dt * rate_scale;
+					if (forward > accel_thresh)
+						forward = accel_thresh;
 				}
 				if (keys[SDLK_s])
 				{
-					double dt = (double)(tick - s_ts) * rate_scale;
-					if (dt > accel_thresh)
-						dt = accel_thresh;
-					forward = -dt;
-					forward_when_key_released = forward;
+					forward -= dt * rate_scale;
+					if (forward < -accel_thresh)
+						forward = -accel_thresh;
 				}
 				if (keys[SDLK_w] == false && keys[SDLK_s] == false)
 				{
-					double elapsed = 0;
-					double elapsed_w = (double)(tick - w_stop_ts);
-					double elapsed_s = (double)(tick - w_stop_ts);
-					if (elapsed_s > elapsed_w)
-						elapsed = elapsed_w;
-					else
-						elapsed = elapsed_s;
-
-					if (forward_when_key_released > 0)
+					if (forward > 0)
 					{
-						forward = forward_when_key_released - (elapsed * rate_scale * decel_factor);
+						forward -= dt * decel_factor;
 						if (forward < 0)
 							forward = 0;
 					}
 					else
 					{
-						forward = forward_when_key_released + (elapsed * rate_scale * decel_factor);
+						forward += dt * decel_factor;
 						if (forward > 0)
 							forward = 0;
 					}
