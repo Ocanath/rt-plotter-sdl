@@ -138,6 +138,7 @@ int main(int argc, char* args[])
 			int32_t accum_mouse_y = 0;
 			double forward = 0;
 			double forward_when_key_released = 0;
+			double throttle_forward = 0;
 
 			SDL_WarpMouseInWindow(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
@@ -162,6 +163,8 @@ int main(int argc, char* args[])
 			uint64_t print_ts = 0;
 			int32_t deltax_lastvalid = 0;
 			uint8_t throttle = 0;
+			uint8_t prev_throttle = 0;
+			uint64_t throttle_stop_ts = 0;
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -226,8 +229,14 @@ int main(int argc, char* args[])
 				if (throttle)
 				{
 					accel_thresh = 1000.0;
-					rate_scale = 0.5;
+					rate_scale = 0.3;
+					throttle_forward = forward;
 				}
+				if (prev_throttle == 1 && throttle == 0)
+				{
+					throttle_stop_ts = tick;
+				}
+				prev_throttle = throttle;
 
 
 				if (keys[SDLK_w])
