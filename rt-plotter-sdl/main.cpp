@@ -153,7 +153,8 @@ int main(int argc, char* args[])
 			uint64_t s_ts = 0;
 			bool w_pressed_prev = false;
 			bool s_pressed_prev = false;
-
+			int zerocount = 0;
+			uint64_t mouse_activity_ts = 0;
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -164,16 +165,46 @@ int main(int argc, char* args[])
 				}
 				float t = ((float)tick) * 0.001f;
 
+				uint8_t mouse_motion = 0;
+				SDL_PollEvent(&e);
+				{
+					if (e.type == SDL_QUIT)
+						quit = true;
+					else if (e.type == SDL_KEYDOWN)
+					{
+						int idx = (int)e.key.keysym.sym;
+						if (idx >= 0 && idx <= sizeof(keys) / sizeof(bool))
+						{
+							keys[idx] = true;
+						}
+					}
+					else if (e.type == SDL_KEYUP)
+					{
+						int idx = (int)e.key.keysym.sym;
+						if (idx >= 0 && idx <= sizeof(keys) / sizeof(bool))
+						{
+							keys[idx] = false;
+						}
+					}
+					else if (e.type == SDL_MOUSEMOTION)
+					{
+						mouse_motion = 1;
+						mouse_activity_ts = tick;
+					}
+				}
 
 				int mouse_x, mouse_y;
 				SDL_GetMouseState(&mouse_x, &mouse_y);
 				int32_t gain_x = 20;
 				int32_t gain_y = 10;
-				accum_mouse_x = ( (accum_mouse_x + (mouse_x - prev_mouse_x)* gain_x) );
-				accum_mouse_y = ( ( accum_mouse_y + (mouse_y - prev_mouse_y)* gain_y) );
+				int32_t deltax = (mouse_x - prev_mouse_x)* gain_x;
+				int32_t deltay = (mouse_y - prev_mouse_y) * gain_y;
+
+				accum_mouse_x = ( (accum_mouse_x + deltax) );
+				accum_mouse_y = ( ( accum_mouse_y + deltay) );
 				accum_mouse_y = symm_thresh(accum_mouse_y, PI_14B / 2);
-				int32_t w1 = (-accum_mouse_x + (int32_t)forward);
-				int32_t w2 = (-accum_mouse_x - (int32_t)forward);
+				int32_t w1 = (deltax + (int32_t)forward);
+				int32_t w2 = (deltax - (int32_t)forward);
 				int32_t gy = wrap_2pi_14b(accum_mouse_y);
 				
 				double accel_thresh = 10.0;
@@ -182,14 +213,18 @@ int main(int argc, char* args[])
 					double dt = (double)(tick - w_ts) * 0.001;
 					if (dt > accel_thresh)
 						dt = accel_thresh;
-					forward += (double)delta * dt;
+					forward = dt*1000;
 				}
 				if (keys[SDLK_s])
 				{
 					double dt = (double)(tick - s_ts) * 0.001;
 					if (dt > accel_thresh)
 						dt = accel_thresh;
-					forward -= (double)delta * dt;
+					forward = -dt*1000;
+				}
+				if (keys[SDLK_w] == false && keys[SDLK_s] == false)
+				{
+					forward = 0;
 				}
 				if (keys[SDLK_w] == true && w_pressed_prev == false)
 				{
@@ -201,9 +236,11 @@ int main(int argc, char* args[])
 				}
 				w_pressed_prev = keys[SDLK_w];
 				s_pressed_prev = keys[SDLK_s];
-
-
-				printf("%f, %f, %f\n", (float)w1*(180.f/(float)PI_14B), (float)w2 * (180.f / (float)PI_14B), (float)gy*(180.f/(float)PI_14B));
+				
+				if (mouse_motion != 0 || (tick - mouse_activity_ts) > 10)
+				{
+					printf("%f, %f, %f, %d\n", (float)w1, (float)w2, (float)gy * (180.f / (float)PI_14B));
+				}
 				SDL_WarpMouseInWindow(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
 				uint8_t pld[32] = { 0 };
@@ -225,30 +262,11 @@ int main(int argc, char* args[])
 				chkidx++;
 				int pld_size = chkidx * sizeof(uint16_t);
 				int stuffed_size = PPP_stuff(pld, pld_size, gl_ppp_stuffing_buffer, sizeof(gl_ppp_stuffing_buffer));
-				sendto(client.s, (const char*)gl_ppp_stuffing_buffer, stuffed_size, 0, (struct sockaddr*)&client.si_other, client.slen);
+				for(int i = 0; i < 3; i++)
+					sendto(client.s, (const char*)gl_ppp_stuffing_buffer, stuffed_size, 0, (struct sockaddr*)&client.si_other, client.slen);
 
 
-				SDL_PollEvent(&e);
-				{ 
-					if (e.type == SDL_QUIT) 
-						quit = true; 
-					else if (e.type == SDL_KEYDOWN)
-					{
-						int idx = (int)e.key.keysym.sym;
-						if (idx >= 0 && idx <= sizeof(keys) / sizeof(bool))
-						{
-							keys[idx] = true;
-						}
-					}
-					else if (e.type == SDL_KEYUP)
-					{
-						int idx = (int)e.key.keysym.sym;
-						if (idx >= 0 && idx <= sizeof(keys) / sizeof(bool))
-						{
-							keys[idx] = false;
-						}
-					}
-				} 
+
 			}
 		}
 	}
