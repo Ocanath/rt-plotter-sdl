@@ -137,8 +137,9 @@ int main(int argc, char* args[])
 			int32_t accum_mouse_x = 0;
 			int32_t accum_mouse_y = 0;
 			double forward = 0;
-			double forward_when_key_released = 0;
-			double throttle_forward = 0;
+			const double slow_speedcap = 200;
+			const double fast_speedcap = 1000;
+			double velocity_threshold = slow_speedcap;
 
 			SDL_WarpMouseInWindow(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
@@ -223,28 +224,37 @@ int main(int argc, char* args[])
 				accum_mouse_y = ( ( accum_mouse_y + deltay) );
 				accum_mouse_y = symm_thresh(accum_mouse_y, PI_14B / 2);
 				
-				double accel_thresh = 200.0;
+
 				double rate_scale = 0.75;
-				double decel_factor = 2.0;
-				if (throttle)
-				{
-					accel_thresh = 1000.0;
-					rate_scale = 0.6;
-					throttle_forward = forward;
-				}
+				double turbo_accel = 0.6;
+				double decel_factor = 3.0;
 
 				double dt = (double)delta*.001;
+				if (throttle)
+				{
+					rate_scale = turbo_accel + 0.1;
+					velocity_threshold += dt* turbo_accel;
+					if (velocity_threshold > fast_speedcap)
+						velocity_threshold = fast_speedcap;
+				}
+				else
+				{
+					rate_scale = turbo_accel + 0.1;
+					velocity_threshold -= dt * turbo_accel;
+					if (velocity_threshold < slow_speedcap)
+						velocity_threshold = slow_speedcap;
+				}
 				if (keys[SDLK_w])
 				{
 					forward += dt * rate_scale;
-					if (forward > accel_thresh)
-						forward = accel_thresh;
+					if (forward > velocity_threshold)
+						forward = velocity_threshold;
 				}
 				if (keys[SDLK_s])
 				{
 					forward -= dt * rate_scale;
-					if (forward < -accel_thresh)
-						forward = -accel_thresh;
+					if (forward < -velocity_threshold)
+						forward = -velocity_threshold;
 				}
 				if (keys[SDLK_w] == false && keys[SDLK_s] == false)
 				{
