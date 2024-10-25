@@ -170,27 +170,17 @@ void unpack_8bit_into_12bit(uint8_t* arr, uint16_t* vals, int valsize)
 }
 #define NUM_FSR_PER_FINGER 6
 
-/*Packing structure for de-compressed FSRs*/
-typedef union
-{
-	uint8_t d[sizeof(uint16_t) * NUM_FSR_PER_FINGER];
-	uint16_t v[NUM_FSR_PER_FINGER];
-}fsr_fmt_t;
-
+int gl_selected_channel = 0;
 void parse_PPP_fsr_sensor(uint8_t* input_buf, int payload_size, float* parsed_data, int* parsed_data_size)
 {
-	//for (int i = 0; i < payload_size; i++)
- //	{
-	//	printf("%X ", input_buf[i]);
-	//}
-	//printf("\r\n");
-
-	fsr_fmt_t fmt = { 0 };
-	unpack_8bit_into_12bit(input_buf, fmt.v, NUM_FSR_PER_FINGER);
+	int idxs[] = {0+gl_selected_channel, 6+gl_selected_channel };
+	uint16_t* p16 = (uint16_t*)(&input_buf[0]);
 	int i = 0;
-	for (i = 0; i < NUM_FSR_PER_FINGER; i++)
+	printf("CH%d [comp][raw] = ", gl_selected_channel);
+
+	for (i = 0; i < sizeof(idxs)/sizeof(int); i++)
 	{
-		parsed_data[i] = (float)fmt.v[i];
+		parsed_data[i] = (float)(p16[idxs[i]]);
 		printf("%f, ", parsed_data[i]);
 	}
 	printf("\r\n");
@@ -323,6 +313,7 @@ int main(int argc, char* args[])
 			int wordsize = 0;
 			int previous_wordsize = 0;
 			int wordsize_match_count = 0;
+
 
 			while (quit == false) 
 			{
@@ -500,7 +491,26 @@ int main(int argc, char* args[])
 				{ 
 					if (e.type == SDL_QUIT) 
 						quit = true; 
-				} 
+					else if (e.type == SDL_KEYDOWN)
+					{
+						int keyval = (int)e.key.keysym.sym;
+					}
+					else if (e.type == SDL_KEYUP)
+					{
+						int keyval = (int)e.key.keysym.sym;
+						if (keyval == SDLK_UP)
+						{
+							gl_selected_channel = (gl_selected_channel + 1) % NUM_FSR_PER_FINGER;
+						}
+						if (keyval == SDLK_DOWN)
+						{
+							gl_selected_channel = (gl_selected_channel - 1) % NUM_FSR_PER_FINGER;
+							if (gl_selected_channel < 0)
+								gl_selected_channel = NUM_FSR_PER_FINGER + gl_selected_channel;
+						}
+					}
+
+				}
 			}
 
 			//erase all the buffers
