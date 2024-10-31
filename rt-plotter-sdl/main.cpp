@@ -173,14 +173,13 @@ void unpack_8bit_into_12bit(uint8_t* arr, uint16_t* vals, int valsize)
 int gl_selected_channel = 0;
 void parse_PPP_fsr_sensor(uint8_t* input_buf, int payload_size, float* parsed_data, int* parsed_data_size)
 {
-	int idxs[] = {0+gl_selected_channel, 6+gl_selected_channel };
-	uint16_t* p16 = (uint16_t*)(&input_buf[0]);
+	uint16_t vals[6] = { 0 };
+	unpack_8bit_into_12bit(input_buf, vals, 6);
+	printf("Datans: ");
 	int i = 0;
-	printf("CH%d [comp][raw] = ", gl_selected_channel);
-
-	for (i = 0; i < sizeof(idxs)/sizeof(int); i++)
+	for (i = 0; i < 6; i++)
 	{
-		parsed_data[i] = (float)(p16[idxs[i]]);
+		parsed_data[i] = (float)(vals[i]);
 		printf("%f, ", parsed_data[i]);
 	}
 	printf("\r\n");
