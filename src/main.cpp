@@ -109,7 +109,7 @@ void text_only(int serial_handle)
 					parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
 					for (int fvidx = 0; fvidx < wordsize; fvidx++)
 					{
-						float val = gl_valdump[fvidx]*gl_options.yscale;
+						float val = gl_valdump[fvidx]*gl_options.parser_yscale;
 						if (val >= 0)
 							printf("+%0.6f", val);
 						else
@@ -226,7 +226,8 @@ int main(int argc, char *args[])
 			int previous_wordsize = 0;
 			int wordsize_match_count = 0;
 			uint32_t num_frames = 0;
-
+			
+			int cycle_count_for_printing = 0;
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -260,11 +261,15 @@ int main(int argc, char *args[])
 							wordsize_match_count++;
 							if (gl_options.print_vals)
 							{
-								for (int fvidx = 0; fvidx < wordsize; fvidx++)
+								cycle_count_for_printing = (cycle_count_for_printing + 1) % gl_options.print_in_parser_every_n;
+								if (cycle_count_for_printing == 0)
 								{
-									printf("%f, ", gl_valdump[fvidx]*gl_options.yscale);
+									for (int fvidx = 0; fvidx < wordsize; fvidx++)
+									{
+										printf("%f, ", gl_valdump[fvidx] * gl_options.parser_yscale);
+									}
+									printf("\n");
 								}
-								printf("\n");
 							}
 						}
 						else
