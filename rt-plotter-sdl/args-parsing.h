@@ -15,6 +15,7 @@ typedef struct cmd_options_t
 	uint8_t csv_header;
 	float parser_yscale;
 	int print_in_parser_every_n;
+	int num_widths;
 }cmd_options_t;
 
 extern cmd_options_t gl_options;
