@@ -141,7 +141,7 @@ int main(int argc, char *args[])
 	{
 		char filename[32] = {0};	//some large enough empty buffer
 		sprintf(filename, "/dev/ttyUSB%d", i);
-		int serial_port = open("/dev/ttyUSB0", O_RDWR);
+		serial_port = open("/dev/ttyUSB0", O_RDWR);
 		if (serial_port < 0) 
 		{
 			printf("Error %i from open %s: %s\n", errno, filename, strerror(errno));
