@@ -135,10 +135,27 @@ int main(int argc, char *args[])
 {
 
 	parse_args(argc, args, &gl_options);
-	
-	int serial_port = open("/dev/ttyUSB0", O_RDWR);
-	if (serial_port < 0) {
-		printf("Error %i from open: %s\n", errno, strerror(errno));
+	int found_a_serial_port = 0;
+	int serial_port = -1;
+	for(int i = 0; i < 256; i++)
+	{
+		char filename[32] = {0};	//some large enough empty buffer
+		sprintf(filename, "/dev/ttyUSB%d", i);
+		int serial_port = open("/dev/ttyUSB0", O_RDWR);
+		if (serial_port < 0) 
+		{
+			printf("Error %i from open %s: %s\n", errno, filename, strerror(errno));
+		}
+		else
+		{
+			found_a_serial_port = 1;
+			break;
+		}
+	}
+	if(found_a_serial_port == 0)
+	{
+		printf("Exiting due to no serial port found\n");
+		return -1;
 	}
 
 	struct termios2 tty;
