@@ -6,13 +6,15 @@
 
 cmd_options_t gl_options = {
 	0,	//spread lines
-	921600,	//baud rate
-	400.f/(4096.f),	//yscale,
-	0,	//print values to console
+	460800,	//baud rate
+	400/(4096.f),	//yscale,
+	1,	//print values to console
 	0, //print values to console ONLY (no actual plotting!)
 	0, //print in parser flag active
 	0,	//xy mode
-	0	//csv header
+	0,	//csv header
+	(1.f/4096.f),
+	10
 };
 
 std::string gl_csvheader;
@@ -66,6 +68,31 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				else
 				{
 					sprintf_s(printstr, sizeof(printstr),  "invalid yscale format\r\n");
+				}
+			}
+			if (strcmp("--pyscale", argv[i]) == 0)
+			{
+				if (argc > (i + 1))
+				{
+					float value = strtof(argv[i + 1], &tmp);
+					popts->parser_yscale = value;
+					sprintf_s(printstr, sizeof(printstr), "Overriding console print yscale as %f\r\n", popts->parser_yscale);
+				}
+				else
+				{
+					sprintf_s(printstr, sizeof(printstr), "invalid yscale format\r\n");
+				}
+			}
+			if (strcmp("--parsermod", argv[i]) == 0)
+			{
+				if (argc > (i + 1))
+				{
+					popts->print_in_parser_every_n = (int)strtol(argv[i + 1], &tmp, 10);
+					sprintf_s(printstr, sizeof(printstr), "Overriding console print yscale as %d\r\n", popts->print_in_parser_every_n);
+				}
+				else
+				{
+					sprintf_s(printstr, sizeof(printstr), "invalid yscale format\r\n");
 				}
 			}
 			if (strcmp("--printvals", argv[i]) == 0)

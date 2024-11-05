@@ -207,7 +207,7 @@ int main(int argc, char* args[])
 			SDL_Event e; 
 			bool quit = false; 
 			int inc = 0;
-			const int dbufsize = SCREEN_WIDTH*3;
+			const int dbufsize = SCREEN_WIDTH*18;
 			std::vector<SDL_Point> points(dbufsize);
 			const int numlines = 1;
 			std::vector<std::vector<fpoint_t>> fpoints_lines(numlines, std::vector<fpoint_t>(dbufsize) );
@@ -223,7 +223,7 @@ int main(int argc, char* args[])
 			int wordsize = 0;
 			int previous_wordsize = 0;
 			int wordsize_match_count = 0;
-
+			int cycle_count_for_printing = 0;
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -258,11 +258,15 @@ int main(int argc, char* args[])
 							wordsize_match_count++;
 							if (gl_options.print_vals)
 							{
-								for (int fvidx = 0; fvidx < wordsize; fvidx++)
+								cycle_count_for_printing = (cycle_count_for_printing + 1) % gl_options.print_in_parser_every_n;
+								if (cycle_count_for_printing == 0)
 								{
-									printf("%f, ", gl_valdump[fvidx]*gl_options.yscale);
+									for (int fvidx = 0; fvidx < wordsize; fvidx++)
+									{
+										printf("%f, ", gl_valdump[fvidx] * gl_options.parser_yscale);
+									}
+									printf("\n");
 								}
-								printf("\n");
 							}
 						}
 						else
