@@ -127,7 +127,7 @@ void text_only(HANDLE*pSer)
 					{
 						if (gl_options.print_in_parser == 0)
 						{
-							float val = gl_valdump[fvidx]*gl_options.yscale;
+							float val = gl_valdump[fvidx]*gl_options.parser_yscale;
 							if (val >= 0)
 								printf("+%0.6f", val);
 							else
