@@ -14,7 +14,8 @@ cmd_options_t gl_options = {
 	0,	//xy mode
 	0,	//csv header
 	(1.f/4096.f),
-	10
+	10,
+	3
 };
 
 std::string gl_csvheader;
@@ -90,6 +91,26 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				{
 					popts->print_in_parser_every_n = (int)strtol(argv[i + 1], &tmp, 10);
 					sprintf(printstr, "Overriding console print yscale as %d\r\n", popts->print_in_parser_every_n);
+				}
+				else
+				{
+					sprintf(printstr, "invalid yscale format\r\n");
+				}
+			}
+			if (strcmp("--nwidth", argv[i]) == 0)
+			{
+				if (argc > (i + 1))
+				{
+					int value = (int)strtol(argv[i + 1], &tmp, 10);
+					if (value > 0 && value < 10000)
+					{
+						popts->num_widths = value;
+						sprintf(printstr, "Overriding width arg to %d\r\n", popts->num_widths);
+					}
+					else
+					{
+						sprintf(printstr, "error: value out of bounds\r\n");
+					}
 				}
 				else
 				{

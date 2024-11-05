@@ -208,7 +208,7 @@ int main(int argc, char *args[])
 			SDL_Event e; 
 			bool quit = false; 
 			int inc = 0;
-			const int dbufsize = SCREEN_WIDTH*3;
+			const int dbufsize = SCREEN_WIDTH*gl_options.num_widths;
 			// const int dbufsize = 10;
 			std::vector<SDL_Point> points(dbufsize);
 			const int numlines = 2;
