@@ -14,7 +14,7 @@ cmd_options_t gl_options = {
 	0,	//xy mode
 	0,	//csv header
 	(1.f/4096.f),
-	0,
+	1,
 	12
 };
 
