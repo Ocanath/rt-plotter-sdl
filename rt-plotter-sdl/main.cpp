@@ -296,7 +296,7 @@ int main(int argc, char* args[])
 			SDL_Event e; 
 			bool quit = false; 
 			int inc = 0;
-			const int dbufsize = SCREEN_WIDTH*3;
+			const int dbufsize = SCREEN_WIDTH;
 			std::vector<SDL_Point> points(dbufsize);
 			const int numlines = 1;
 			std::vector<std::vector<fpoint_t>> fpoints_lines(numlines, std::vector<fpoint_t>(dbufsize) );

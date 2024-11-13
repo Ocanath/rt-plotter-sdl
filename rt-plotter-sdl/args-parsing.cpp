@@ -92,6 +92,12 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				popts->offaxis_encoder = 1;
 				sprintf_s(printstr, sizeof(printstr), "Parsing as offaxis encoder\r\n");
 			}
+			if (strcmp("--help", argv[i]) == 0)
+			{
+				printf("Commands:\n");
+				printf("--csv-header \"arg\"			for using > to dump to a.csv file.The arg is the first line.Put in quotes\n");
+				printf("--csv-header \"arg\"			for using > to dump to a.csv file.The arg is the first line.Put in quotes\n");
+			}
 			if (popts->csv_header == 0)
 			{
 				printf(printstr);
