@@ -106,8 +106,29 @@ void text_only(HANDLE*pSer)
 	int previous_wordsize = 0;
 	int wordsize = 0;
 	int wordsize_match_count = 0;
+	uint64_t txts = 0;
+
 	while (1)
 	{
+		uint64_t tick = SDL_GetTicks64();
+		if (tick - txts > 5)
+		{
+			txts = tick;
+			double time = (double)tick / 1000.f;
+			double s1 = sin(time);
+			double c1 = cos(time);
+
+			int32_t vals[3] = { 0 };
+			uint8_t stuff_buf[sizeof(vals) * 2 + 2] = { 0 };
+			int idx = 0;
+			vals[idx++] = (int32_t)(s1 * 4096.);
+			vals[idx++] = (int32_t)(c1 * 4096.);
+			vals[idx++] = tick;
+			int num_bytes = PPP_stuff((uint8_t*)vals, sizeof(int32_t) * idx, stuff_buf, sizeof(stuff_buf));
+			LPDWORD written = 0;
+			int wfrc = WriteFile(*pSer, stuff_buf, num_bytes, written, NULL);
+		}
+
 		LPDWORD num_bytes_read = 0;
 		pld_size = 0;
 		int rc = ReadFile(*pSer, gl_ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
