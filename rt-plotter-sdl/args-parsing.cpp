@@ -134,6 +134,12 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				popts->xy_mode = 1;
 				sprintf_s(printstr, sizeof(printstr),  "Using xy mode...\r\n");
 			}
+			if (strcmp("--loopback", argv[i]) == 0)
+			{
+				popts->write_dummy_loopback = 1;
+				sprintf_s(printstr, sizeof(printstr), "Writing Dummy Data...\r\n");
+			}
+
 			if (popts->csv_header == 0)
 			{
 				printf(printstr);
