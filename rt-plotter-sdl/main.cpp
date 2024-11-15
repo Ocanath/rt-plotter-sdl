@@ -250,6 +250,7 @@ int main(int argc, char* args[])
 			int previous_wordsize = 0;
 			int wordsize_match_count = 0;
 			int cycle_count_for_printing = 0;
+			uint32_t view_size = 0;
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -373,7 +374,10 @@ int main(int argc, char* args[])
 					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
 					(*pFpoints)[dbufsize - 1].x = x;
 					(*pFpoints)[dbufsize - 1].y = y;
-
+					if (view_size < dbufsize)
+					{
+						view_size = view_size + 1;
+					}
 
 					float div_pixel_size = 0;
 					float div_center = 0;
@@ -402,7 +406,7 @@ int main(int argc, char* args[])
 						}
 					}
 
-					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);
+					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), view_size);
 				}
 				SDL_RenderPresent(pRenderer);
 				
