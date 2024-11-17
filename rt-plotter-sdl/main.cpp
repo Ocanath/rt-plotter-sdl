@@ -57,6 +57,7 @@ uint16_t get_checksum16(uint16_t* arr, int size)
 }
 
 
+
 /*
 * Inputs:
 *	input_buf: raw unstuffed data buffer
@@ -80,21 +81,13 @@ void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parse
 }
 
 
-uint64_t gl_txts = 0;
-void write_hand_command(HANDLE*pSer)
+void write_encoder_command(HANDLE*pSer, uint16_t address)
 {
-	uint64_t tick = GetTickCount64();
-	if (tick - gl_txts > 10)
-	{
-		gl_txts = tick;
+	uint8_t stuff_buf[sizeof(address) * 2 + 2] = { 0 };
 
-		uint16_t address = 1;
-		uint8_t stuff_buf[sizeof(address) * 2 + 2] = { 0 };
-
-		int nb = PPP_stuff((uint8_t*)(&address), sizeof(address), stuff_buf, sizeof(stuff_buf));
-		LPDWORD written = 0;
-		int wfrc = WriteFile(*pSer, stuff_buf, nb, written, NULL);
-	}
+	int nb = PPP_stuff((uint8_t*)(&address), sizeof(address), stuff_buf, sizeof(stuff_buf));
+	LPDWORD written = 0;
+	int wfrc = WriteFile(*pSer, stuff_buf, nb, written, NULL);
 }
 
 void main_loop(HANDLE*pSer)
@@ -104,12 +97,19 @@ void main_loop(HANDLE*pSer)
 	int wordsize = 0;
 	int wordsize_match_count = 0;
 	
+	uint16_t addresses[] = { 1,2 };
+	int addr_idx = 0;
+	uint64_t tx_ts = 0;
 	while (1)
 	{
-		if (gl_options.write_dummy_loopback)
+		uint64_t tick = GetTickCount64();
+		if (tick - tx_ts > 5)
 		{
-			write_hand_command(pSer);
+			write_encoder_command(pSer, addresses[addr_idx]);
+			addr_idx = (addr_idx + 1) % (sizeof(addresses) / sizeof(uint16_t));
+			tx_ts = tick;
 		}
+
 		LPDWORD num_bytes_read = 0;
 		pld_size = 0;
 		int rc = ReadFile(*pSer, gl_ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
