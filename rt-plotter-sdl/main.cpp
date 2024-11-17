@@ -44,6 +44,18 @@ uint8_t get_checksum(uint8_t* arr, int size)
 	return -checksum;
 }
 
+/*
+Generic hex checksum calculation.
+TODO: use this in the psyonic API
+ */
+uint16_t get_checksum16(uint16_t* arr, int size)
+{
+	int16_t checksum = 0;
+	for (int i = 0; i < size; i++)
+		checksum += (int16_t)arr[i];
+	return -checksum;
+}
+
 
 /*
 * Inputs:
@@ -54,28 +66,17 @@ uint8_t get_checksum(uint8_t* arr, int size)
 */
 void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parsed_data, int* parsed_data_size)
 {
-	uint8_t vibration = input_buf[1];
-	uint8_t dc_state = input_buf[9]; 
-	uint8_t r = input_buf[4];
-	uint8_t g = input_buf[5];
-	uint8_t b = input_buf[6];
-	uint8_t chk = get_checksum(input_buf, 10);
-	if (chk == input_buf[10])
+	uint16_t* pbuf16 = (uint16_t*)input_buf;
+
+	uint16_t chk = get_checksum16(pbuf16, 3);
+	if (chk == pbuf16[3])
 	{
-		const char* vsig_map[6] = { "DIFF_NEG", "DIFF_POS", "CO_CONTRACT", "RELAX_SIG", "PULSE_POS", "PULSE_NEG" };
-		if (dc_state >= 0 && dc_state < 6)
-		{
-			printf("Vib = %d, color = %0.2X%0.2X%0.2X, Sig = %s\n", vibration, r, g, b, vsig_map[dc_state]);
-		}
-		else
-		{
-			printf("error, dc state out of bounds\n");
-		}
+		printf("Address:%d, cos:%d, sin:%d\n", pbuf16[0], pbuf16[1], pbuf16[2]);
 	}
-	else
-	{
-		printf("Checksum Mismatch\n");
-	}
+	//else
+	//{
+	//	printf("Checksum Mismatch\n");
+	//}
 }
 
 
@@ -87,17 +88,16 @@ void write_hand_command(HANDLE*pSer)
 	{
 		gl_txts = tick;
 
-		uint8_t buf[] = { 0x50, 0x48, 0x00 };
-		uint8_t stuff_buf[sizeof(buf) * 2 + 2] = { 0 };
+		uint16_t address = 1;
+		uint8_t stuff_buf[sizeof(address) * 2 + 2] = { 0 };
 
-		buf[2] = get_checksum(buf, 2);
-		int nb = PPP_stuff(buf, sizeof(buf), stuff_buf, sizeof(stuff_buf));
+		int nb = PPP_stuff((uint8_t*)(&address), sizeof(address), stuff_buf, sizeof(stuff_buf));
 		LPDWORD written = 0;
 		int wfrc = WriteFile(*pSer, stuff_buf, nb, written, NULL);
 	}
 }
 
-void text_only(HANDLE*pSer)
+void main_loop(HANDLE*pSer)
 {
 	int pld_size = 0;
 	int previous_wordsize = 0;
@@ -153,7 +153,7 @@ int main(int argc, char* args[])
 			printf("No COM ports found\n");
 	}
 
-	text_only(&serialport);
+	main_loop(&serialport);
 
 	//close serial port
 	CloseHandle(serialport);
