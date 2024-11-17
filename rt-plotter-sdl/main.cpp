@@ -106,11 +106,12 @@ void main_loop(HANDLE*pSer)
 	int wordsize = 0;
 	int wordsize_match_count = 0;
 	
-	uint16_t addresses[] = { 1,2 };
+	uint16_t addresses[] = { 1,2,3 };
 	int num_addresses = (sizeof(addresses) / sizeof(uint16_t));
 	float angles[(sizeof(addresses) / sizeof(uint16_t))] = { 0 };
 	int addr_idx = 0;
 	uint64_t tx_ts = 0;
+	uint8_t done = 0;
 	while (1)
 	{
 		write_encoder_command(pSer, addresses[addr_idx]);
@@ -136,6 +137,7 @@ void main_loop(HANDLE*pSer)
 					if (addr_idx >= num_addresses)
 					{
 						addr_idx = 0;
+						done = 1;
 					}
 					
 				}
@@ -143,17 +145,26 @@ void main_loop(HANDLE*pSer)
 			if (tick - start_ts > 1)
 			{
 				poll_for_response = 0;
-				addr_idx = (addr_idx + 1) % (sizeof(addresses) / sizeof(uint16_t));
+				addr_idx = (addr_idx + 1);
+				if (addr_idx >= num_addresses)
+				{
+					addr_idx = 0;
+					done = 1;
+				}
+
 			}
 		}
 
 
-
-		for (int i = 0; i < num_addresses; i++)
+		if(done != 0)
 		{
-			printf("%f, ", angles[i]);
+			for (int i = 0; i < num_addresses; i++)
+			{
+				printf("%f, ", angles[i]);
+			}
+			printf("\n");
+			done = 0;
 		}
-		printf("\n");
 	}
 }
 
