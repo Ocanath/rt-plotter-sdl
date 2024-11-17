@@ -65,14 +65,23 @@ uint16_t get_checksum16(uint16_t* arr, int size)
 *	parsed_data: floats, parsed from input buffer
 * Returns: number of parsed values
 */
-void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parsed_data, int* parsed_data_size)
+void parse_read(uint8_t* input_buf, int input_size, float* parsed_data, int parsed_size)
 {
 	uint16_t* pbuf16 = (uint16_t*)input_buf;
 
 	uint16_t chk = get_checksum16(pbuf16, 3);
 	if (chk == pbuf16[3])
 	{
-		printf("Address:%d, cos:%d, sin:%d\n", pbuf16[0], pbuf16[1], pbuf16[2]);
+		//printf("Address:%d, cos:%d, sin:%d\n", pbuf16[0], pbuf16[1], pbuf16[2]);
+		uint16_t address = pbuf16[0] - 1;	//start everything at 1
+		if (address >= 0 && address < parsed_size)
+		{
+			double sin = (double)pbuf16[2] - 1995.;
+			double cos = (double)pbuf16[1] - 1995.;
+			float angle = (float)atan2(sin, cos);
+			parsed_data[address] = angle;
+		}
+		
 	}
 	//else
 	//{
@@ -98,30 +107,53 @@ void main_loop(HANDLE*pSer)
 	int wordsize_match_count = 0;
 	
 	uint16_t addresses[] = { 1,2 };
+	int num_addresses = (sizeof(addresses) / sizeof(uint16_t));
+	float angles[(sizeof(addresses) / sizeof(uint16_t))] = { 0 };
 	int addr_idx = 0;
 	uint64_t tx_ts = 0;
 	while (1)
 	{
-		uint64_t tick = GetTickCount64();
-		if (tick - tx_ts > 5)
+		write_encoder_command(pSer, addresses[addr_idx]);
+	
+		uint8_t poll_for_response = 1;
+		uint64_t start_ts = GetTickCount64();
+		while (poll_for_response != 0)
 		{
-			write_encoder_command(pSer, addresses[addr_idx]);
-			addr_idx = (addr_idx + 1) % (sizeof(addresses) / sizeof(uint16_t));
-			tx_ts = tick;
-		}
-
-		LPDWORD num_bytes_read = 0;
-		pld_size = 0;
-		int rc = ReadFile(*pSer, gl_ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
-		for (int i = 0; i < (int)num_bytes_read; i++)
-		{
-			uint8_t new_byte = gl_ser_readbuf[i];
-			pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
-			if (pld_size > 0)
+			uint64_t tick = GetTickCount64();
+			LPDWORD num_bytes_read = 0;
+			pld_size = 0;
+			int rc = ReadFile(*pSer, gl_ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
+			for (int i = 0; i < (int)num_bytes_read; i++)
 			{
-				parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+				uint8_t new_byte = gl_ser_readbuf[i];
+				pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
+				if (pld_size > 0)
+				{
+					parse_read(gl_ppp_payload_buffer, pld_size, angles, num_addresses);
+					poll_for_response = 0;
+
+					addr_idx = (addr_idx + 1);
+					if (addr_idx >= num_addresses)
+					{
+						addr_idx = 0;
+					}
+					
+				}
+			}
+			if (tick - start_ts > 1)
+			{
+				poll_for_response = 0;
+				addr_idx = (addr_idx + 1) % (sizeof(addresses) / sizeof(uint16_t));
 			}
 		}
+
+
+
+		for (int i = 0; i < num_addresses; i++)
+		{
+			printf("%f, ", angles[i]);
+		}
+		printf("\n");
 	}
 }
 
