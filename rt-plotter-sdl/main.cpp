@@ -31,6 +31,7 @@ static uint8_t gl_ppp_unstuffing_buffer[UNSTUFFING_BUFFER_SIZE] = { 0 };
 static uint8_t gl_ser_readbuf[512] = { 0 };
 static float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
 
+static uint64_t dummy_loopback_txts = 0;
 
 /*
 Generic hex checksum calculation.
@@ -98,26 +99,63 @@ void parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data, 
 	*parsed_data_size = wordsize;
 }
 
-uint64_t dummy_loopback_txts = 0;
+
+void parse_abh_pkt(uint8_t* pkt, int size)
+{
+	//for (int pldidx = 0; pldidx < size; pldidx++)
+	//	printf("%0.2X", gl_ppp_unstuffing_buffer[pldidx]);
+	//printf("\n");
+	uint8_t format_header = pkt[0];
+	int16_t * ppos16 = (int16_t*)(&pkt[1]);
+	for (int i = 0; i < 6; i++)
+	{
+		double posDeg = ((double)ppos16[i] * 150.) / 32767.;
+		printf("%f, ", posDeg);
+	}
+	printf("\n");
+	
+}
+
+/*
+Generic hex checksum calculation.
+TODO: use this in the psyonic API
+*/
+uint8_t get_checksum(uint8_t* arr, int size)
+{
+
+	int8_t checksum = 0;
+	for (int i = 0; i < size; i++)
+		checksum += (int8_t)arr[i];
+	return -checksum;
+}
+
+
+
 void write_dummy_loopback(HANDLE*pSer)
 {
 	uint64_t tick = SDL_GetTicks64();
 	if (tick - dummy_loopback_txts > 5)
 	{
 		dummy_loopback_txts = tick;
-		double time = (double)tick / 1000.f;
-		double s1 = sin(time);
-		double c1 = cos(time);
+		//double time = (double)tick / 1000.f;
+		//double s1 = sin(time);
+		//double c1 = cos(time);
 
-		int32_t vals[3] = { 0 };
-		uint8_t stuff_buf[sizeof(vals) * 2 + 2] = { 0 };
-		int idx = 0;
-		vals[idx++] = (int32_t)(s1 * 4096.);
-		vals[idx++] = (int32_t)(c1 * 4096.);
-		vals[idx++] = tick;
-		int num_bytes = PPP_stuff((uint8_t*)vals, sizeof(int32_t) * idx, stuff_buf, sizeof(stuff_buf));
+		//int32_t vals[3] = { 0 };
+		//uint8_t stuff_buf[sizeof(vals) * 2 + 2] = { 0 };
+		//int idx = 0;
+		//vals[idx++] = (int32_t)(s1 * 4096.);
+		//vals[idx++] = (int32_t)(c1 * 4096.);
+		//vals[idx++] = tick;
+		//int num_bytes = PPP_stuff((uint8_t*)vals, sizeof(int32_t) * idx, stuff_buf, sizeof(stuff_buf));
+		//LPDWORD written = 0;
+		//int wfrc = WriteFile(*pSer, stuff_buf, num_bytes, written, NULL);
+		uint8_t api_buf[] = { 0x50, 0xA0, 0x00 };	//api/extended mode
+		uint8_t stuff_buf[sizeof(api_buf) * 2 + 2] = { 0 };
+		api_buf[2] = get_checksum(api_buf, 2);
+		int nb = PPP_stuff(api_buf, sizeof(api_buf), stuff_buf, sizeof(stuff_buf));
 		LPDWORD written = 0;
-		int wfrc = WriteFile(*pSer, stuff_buf, num_bytes, written, NULL);
+		int wfrc = WriteFile(*pSer, stuff_buf, nb, written, NULL);
 	}
 }
 
@@ -143,33 +181,7 @@ void text_only(HANDLE*pSer)
 			pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
 			if (pld_size > 0)
 			{
-				parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
-
-				//obtain consecutive matching counts
-				if (wordsize == previous_wordsize && wordsize > 0)
-				{
-					wordsize_match_count++;
-					for (int fvidx = 0; fvidx < wordsize; fvidx++)
-					{
-						if (gl_options.print_in_parser == 0)
-						{
-							float val = gl_valdump[fvidx]*gl_options.parser_yscale;
-							if (val >= 0)
-								printf("+%0.6f", val);
-							else
-								printf("%0.6f", val);
-							
-							if (fvidx <  (wordsize - 1))
-								printf(", ");
-						}
-					}
-					printf("\n");
-				}
-				else
-				{
-					wordsize_match_count = 0;
-				}
-				previous_wordsize = wordsize;
+				parse_abh_pkt(gl_ppp_unstuffing_buffer, pld_size);
 			}
 		}
 	}

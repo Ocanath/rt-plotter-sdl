@@ -9,7 +9,7 @@ cmd_options_t gl_options = {
 	460800,	//baud rate
 	400/(4096.f),	//yscale,
 	0,	//print values to console
-	0, //print values to console ONLY (no actual plotting!)
+	1, //print values to console ONLY (no actual plotting!)
 	0, //print in parser flag active
 	0,	//xy mode
 	0,	//csv header
