@@ -57,6 +57,38 @@ uint16_t get_checksum16(uint16_t* arr, int size)
 }
 
 
+static const float offsets[] = { -2.700014, -1.099270, -1.576392, 1.654050, -2.082925, -0.006566 };
+static const float signs[] = { 1,1,1,1,1,1 };
+
+#define ONE_BY_TWO_PI 			0.1591549f
+#define TWO_PI              	6.28318530718f
+#define PI						3.14159265359f
+
+/*
+	fast 2pi mod. needed for sin and cos FAST for angle limiting
+ */
+float fmod_2pi(float in)
+{
+	uint8_t aneg = 0;
+	float in_eval = in;
+	if (in < 0)
+	{
+		aneg = 1;
+		in_eval = -in;
+	}
+	float fv = (float)((int)(in_eval * ONE_BY_TWO_PI));
+	if (aneg == 1)
+		fv = (-fv) - 1;
+	return in - TWO_PI * fv;
+}
+
+/*
+	General purpose 2pi wrap. Ensures -pi to pi
+ */
+float wrap_2pi(float v)
+{
+	return fmod_2pi(v + PI) - PI;
+}
 
 /*
 * Inputs:
@@ -76,10 +108,13 @@ void parse_read(uint8_t* input_buf, int input_size, float* parsed_data, int pars
 		uint16_t address = pbuf16[0] - 1;	//start everything at 1
 		if (address >= 0 && address < parsed_size)
 		{
-			double sin = (double)pbuf16[2] - 1995.;
-			double cos = (double)pbuf16[1] - 1995.;
-			float angle = (float)atan2(sin, cos);
-			parsed_data[address] = angle;
+			if (address < (sizeof(offsets) / sizeof(float)) && address < (sizeof(signs) / sizeof(float)))	//bounds check on signs and offsets arrays
+			{
+				double sin = (double)pbuf16[2] - 1995.;
+				double cos = (double)pbuf16[1] - 1995.;
+				float angle = wrap_2pi((float)atan2(sin, cos) - offsets[address])*signs[address];
+				parsed_data[address] = angle;
+			}
 		}
 		
 	}
@@ -106,7 +141,7 @@ void main_loop(HANDLE*pSer)
 	int wordsize = 0;
 	int wordsize_match_count = 0;
 	
-	uint16_t addresses[] = { 1,2,3 };
+	uint16_t addresses[] = { 1,2,3,4 ,5, 6};
 	int num_addresses = (sizeof(addresses) / sizeof(uint16_t));
 	float angles[(sizeof(addresses) / sizeof(uint16_t))] = { 0 };
 	int addr_idx = 0;
@@ -160,7 +195,7 @@ void main_loop(HANDLE*pSer)
 		{
 			for (int i = 0; i < num_addresses; i++)
 			{
-				printf("%f, ", angles[i]);
+				printf("%.2f, ", angles[i]*180./3.14159265);
 			}
 			printf("\n");
 			done = 0;
