@@ -11,6 +11,7 @@ and may not be redistributed without written permission.*/
 #include "colors.h"
 #include "args-parsing.h"
 #include <algorithm>
+#include "fsrs.h"
 
 #define PAYLOAD_SIZE 512
 #define UNSTUFFING_BUFFER_SIZE (PAYLOAD_SIZE * 2 + 2)
@@ -98,6 +99,7 @@ void parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data, 
 	*parsed_data_size = wordsize;
 }
 
+
 uint64_t dummy_loopback_txts = 0;
 void write_dummy_loopback(HANDLE*pSer)
 {
@@ -179,7 +181,6 @@ void text_only(HANDLE*pSer)
 int main(int argc, char* args[])
 {
 	parse_args(argc, args, &gl_options);
-
 	HANDLE serialport;
 	char namestr[16] = { 0 };
 	uint8_t found = 0;
@@ -204,6 +205,8 @@ int main(int argc, char* args[])
 	}
 	if (gl_options.print_only)
 	{
+		printf("Starting parser\n");
+		// offaxis_encoder_parser(&serialport);
 		text_only(&serialport);
 	}
 
@@ -251,6 +254,8 @@ int main(int argc, char* args[])
 			int wordsize_match_count = 0;
 			int cycle_count_for_printing = 0;
 			uint32_t view_size = 0;
+			int gl_selected_channel = 0;
+
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -259,6 +264,7 @@ int main(int argc, char* args[])
 				SDL_SetRenderDrawColor(pRenderer, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
 				SDL_RenderClear(pRenderer);
 
+				uint8_t new_pkt = 0;
 				if (gl_options.write_dummy_loopback)
 				{
 					write_dummy_loopback(&serialport);
@@ -273,15 +279,30 @@ int main(int argc, char* args[])
 					pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
 					if (pld_size > 0)
 					{
-						if (gl_options.xy_mode == 0)
+
+						if (gl_options.offaxis_encoder)
 						{
-							parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+							parse_PPP_offaxis_encoder(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize, SDL_GetTicks64());
+							new_pkt = 1;
+						}
+						else if (gl_options.fsr_sensor)
+						{
+							parse_PPP_fsr_sensor(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize, SDL_GetTicks64());
+							new_pkt = 1;
 						}
 						else
 						{
-							parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+							if (gl_options.xy_mode == 0)
+							{
+								parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+								new_pkt = 1;
+							}
+							else
+							{
+								parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+								new_pkt = 1;
+							}
 						}
-						
 						//obtain consecutive matching counts
 						if (wordsize == previous_wordsize && wordsize > 0)
 						{
@@ -345,7 +366,6 @@ int main(int argc, char* args[])
 					}
 				}
 
-
 				for (int line = 0; line < fpoints_lines.size(); line++)
 				{	
 					SDL_SetRenderDrawColor(pRenderer, template_colors[line % NUM_COLORS].r, template_colors[line % NUM_COLORS].g, template_colors[line % NUM_COLORS].b, 255);
@@ -353,30 +373,28 @@ int main(int argc, char* args[])
 					//retrieve and load all available datapoints here
 					std::vector<fpoint_t>* pFpoints = &fpoints_lines[line];
 
+					if (new_pkt)
+					{
+						float x, y;
+						if (gl_options.xy_mode == 0)
+						{
+							/*Parsing and loading done HERE.
+							* if there is a more complex parsing function, implement it elsewhere and have it return X and Y.
+							*
+							* It should be a function whose input is the unstuffed PPP buffer and whose output is x and y of each line contained in the buffer payload
+							*/
+							x = gl_valdump[fpoints_lines.size()];
+							y = gl_valdump[line];
+						}
+						else
+						{
+							x = gl_valdump[line * 2];
+							y = gl_valdump[(line * 2) + 1];
+						}
 
-					float x, y;
-					if (gl_options.xy_mode == 0)
-					{
-						/*Parsing and loading done HERE.
-						* if there is a more complex parsing function, implement it elsewhere and have it return X and Y.
-						*
-						* It should be a function whose input is the unstuffed PPP buffer and whose output is x and y of each line contained in the buffer payload
-						*/
-						x = gl_valdump[fpoints_lines.size()];
-						y = gl_valdump[line];
-					}
-					else
-					{
-						x = gl_valdump[line * 2];
-						y = gl_valdump[(line * 2) + 1];
-					}
-					
-					std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
-					(*pFpoints)[dbufsize - 1].x = x;
-					(*pFpoints)[dbufsize - 1].y = y;
-					if (view_size < dbufsize)
-					{
-						view_size = view_size + 1;
+						std::rotate(pFpoints->begin(), pFpoints->begin() + 1, pFpoints->end());
+						(*pFpoints)[dbufsize - 1].x = x;
+						(*pFpoints)[dbufsize - 1].y = y;
 					}
 
 					float div_pixel_size = 0;
@@ -406,7 +424,7 @@ int main(int argc, char* args[])
 						}
 					}
 
-					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), view_size);
+					SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);
 				}
 				SDL_RenderPresent(pRenderer);
 				
@@ -414,7 +432,26 @@ int main(int argc, char* args[])
 				{ 
 					if (e.type == SDL_QUIT) 
 						quit = true; 
-				} 
+					else if (e.type == SDL_KEYDOWN)
+					{
+						int keyval = (int)e.key.keysym.sym;
+					}
+					else if (e.type == SDL_KEYUP)
+					{
+						int keyval = (int)e.key.keysym.sym;
+						if (keyval == SDLK_UP)
+						{
+							gl_selected_channel = (gl_selected_channel + 1) % NUM_FSR_PER_FINGER;
+						}
+						if (keyval == SDLK_DOWN)
+						{
+							gl_selected_channel = (gl_selected_channel - 1) % NUM_FSR_PER_FINGER;
+							if (gl_selected_channel < 0)
+								gl_selected_channel = NUM_FSR_PER_FINGER + gl_selected_channel;
+						}
+					}
+
+				}
 			}
 
 			//erase all the buffers

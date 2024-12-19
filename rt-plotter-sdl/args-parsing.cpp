@@ -16,7 +16,9 @@ cmd_options_t gl_options = {
 	(1.f/4096.f), //console scaler
 	1,	//integer modulo for plotting printing
 	3,	//number of widths
-	1	//write loopback data for basic testing
+	1,	//write loopback data for basic testing
+	0,	//offaxis-encoder
+	0	//fsr-sensor
 };
 
 std::string gl_csvheader;
@@ -139,7 +141,22 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				popts->write_dummy_loopback = 1;
 				sprintf_s(printstr, sizeof(printstr), "Writing Dummy Data...\r\n");
 			}
-
+			if (strcmp("--offaxis-encoder", argv[i]) == 0)
+			{
+				popts->offaxis_encoder = 1;
+				sprintf_s(printstr, sizeof(printstr), "Parsing as offaxis encoder\r\n");
+			}
+			if(strcmp("--fsr", argv[i]) == 0)
+			{
+				popts->fsr_sensor = 1;
+				sprintf_s(printstr, sizeof(printstr), "Parsing as fsr sensor\r\n");
+			}
+			if (strcmp("--help", argv[i]) == 0)
+			{
+				printf("Commands:\n");
+				printf("--csv-header \"arg\"			for using > to dump to a.csv file.The arg is the first line.Put in quotes\n");
+				printf("--csv-header \"arg\"			for using > to dump to a.csv file.The arg is the first line.Put in quotes\n");
+			}
 			if (popts->csv_header == 0)
 			{
 				printf(printstr);
