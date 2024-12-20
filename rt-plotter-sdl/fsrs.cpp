@@ -81,14 +81,14 @@ void parse_PPP_fsr_sensor(uint8_t* input_buf, int payload_size, float* parsed_da
 {
 	uint16_t vals[6] = { 0 };
 	unpack_8bit_into_12bit(input_buf, vals, 6);
-	printf("Datans: ");
+	//printf("Datans: ");
 	int i = 0;
 	for (i = 0; i < 6; i++)
 	{
 		parsed_data[i] = (float)(vals[i]);
-		printf("%f, ", parsed_data[i]);
+		//printf("%f, ", parsed_data[i]);
 	}
-	printf("\r\n");
+	//printf("\r\n");
 	parsed_data[i++] = ((float)ms_tick) / 1000.f;
 	*parsed_data_size = i;
 }
