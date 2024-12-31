@@ -60,6 +60,7 @@ void parse_PPP_offaxis_encoder(uint8_t * input_buf, int payload_size, float * pa
 		//printf("Temperature C = %f, Time = %f\n", parsed_data[0], parsed_data[1]);
 	}
 }
+
 /*
  * Load packed 12 bit values located in an 8bit array into
  * an unpacked (zero padded) 16 bit array. FSR utility function

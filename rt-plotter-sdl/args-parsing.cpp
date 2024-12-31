@@ -6,19 +6,20 @@
 
 cmd_options_t gl_options = {
 	0,	//spread lines
-	460800,	//baud rate
-	400/(4096.f),	//yscale,
+	230400,	//baud rate
+	1,	//yscale,
 	0,	//print values to console
 	0, //print values to console ONLY (no actual plotting!)
 	0, //print in parser flag active
 	0,	//xy mode
 	0,	//csv header
-	(1.f/4096.f), //console scaler
+	1.f, //console scaler
 	1,	//integer modulo for plotting printing
 	3,	//number of widths
-	1,	//write loopback data for basic testing
+	0,	//write loopback data for basic testing
 	0,	//offaxis-encoder
-	0	//fsr-sensor
+	0,	//fsr-sensor
+	1	//temp-sensor
 };
 
 std::string gl_csvheader;
@@ -150,6 +151,11 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 			{
 				popts->fsr_sensor = 1;
 				sprintf_s(printstr, sizeof(printstr), "Parsing as fsr sensor\r\n");
+			}
+			if (strcmp("--tempsensor", argv[i]) == 0)
+			{
+				popts->temp_sensor = 1;
+				sprintf_s(printstr, sizeof(printstr), "\r\n");
 			}
 			if (strcmp("--help", argv[i]) == 0)
 			{
