@@ -31,7 +31,6 @@ typedef enum {
 }parse_types_t;
 
 void parse_args(int argc, char* argv[], cmd_options_t* popts);
-void write_dummy_loopback(uint64_t tick);
 
 
 #endif
