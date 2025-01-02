@@ -23,31 +23,6 @@ typedef struct fpoint_t
 	float y;
 }fpoint_t;
 
-
-uint64_t dummy_loopback_txts = 0;
-void write_dummy_loopback(void)
-{
-	uint64_t tick = SDL_GetTicks64();
-	if (tick - dummy_loopback_txts > 5)
-	{
-		dummy_loopback_txts = tick;
-		double time = (double)tick / 1000.f;
-		double s1 = sin(time);
-		double c1 = cos(time);
-
-		int32_t vals[3] = { 0 };
-		uint8_t stuff_buf[sizeof(vals) * 2 + 2] = { 0 };
-		int idx = 0;
-		vals[idx++] = (int32_t)(s1 * 4096.);
-		vals[idx++] = (int32_t)(c1 * 4096.);
-		vals[idx++] = tick;
-		int num_bytes = PPP_stuff((uint8_t*)vals, sizeof(int32_t) * idx, stuff_buf, sizeof(stuff_buf));
-		serial_write(stuff_buf, num_bytes);
-	}
-}
-
-
-
 int main(int argc, char* args[])
 {
 	parse_args(argc, args, &gl_options);
@@ -117,7 +92,7 @@ int main(int argc, char* args[])
 				uint8_t new_pkt = 0;
 				if (gl_options.write_dummy_loopback)
 				{
-					write_dummy_loopback();
+					write_dummy_loopback(SDL_GetTicks64());
 				}
 
 				
