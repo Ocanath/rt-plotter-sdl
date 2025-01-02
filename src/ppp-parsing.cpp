@@ -1,6 +1,6 @@
 #include "ppp-parsing.h"
 #include <math.h>
-#include "linuxserial.h"
+#include "linux-serial.h"
 #include "PPP.h"
 
 int gl_ppp_bidx = 0;

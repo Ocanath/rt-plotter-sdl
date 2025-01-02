@@ -93,7 +93,7 @@ int main(int argc, char* args[])
 
 				
 				pld_size = 0;
-				int num_bytes_read = read_serial(gl_ser_readbuf);				
+				int num_bytes_read = read_serial(gl_ser_readbuf, sizeof(gl_ser_readbuf));				
 				for (int i = 0; i < (int)num_bytes_read; i++)
 				{
 					uint8_t new_byte = gl_ser_readbuf[i];

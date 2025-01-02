@@ -165,7 +165,7 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 			}
 			if (popts->csv_header == 0)
 			{
-				printf(printstr);
+				printf("%s", printstr);
 				memset(printstr, 0, sizeof(printstr));
 			}
 		}

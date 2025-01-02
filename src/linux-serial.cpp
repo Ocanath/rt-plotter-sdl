@@ -1,6 +1,7 @@
 #include "stdio.h"
 #include "args-parsing.h"
 //linux headers for serial port
+#include <string.h>
 #include <fcntl.h> // Contains file controls like O_RDWR
 #include <errno.h> // Error integer and strerror() function
 #include <unistd.h> // write(), read(), close()
@@ -75,9 +76,9 @@ int serial_write(uint8_t* data, int size)
 	return 0;	//todo write wrapper 
 }
 
-int read_serial(uint8_t * readbuf)
+int read_serial(uint8_t * readbuf, int bufsize)
 {
-	int nb = read(serial_port, &gl_ser_readbuf, sizeof(gl_ser_readbuf) );
+	return read(serial_port, readbuf, bufsize );
 }
 
 void close_serial(void)
