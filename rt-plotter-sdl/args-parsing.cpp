@@ -6,7 +6,7 @@
 
 cmd_options_t gl_options = {
 	0,	//spread lines
-	230400,	//baud rate
+	460800,	//baud rate
 	1,	//yscale,
 	0,	//print values to console
 	0, //print values to console ONLY (no actual plotting!)
@@ -19,7 +19,7 @@ cmd_options_t gl_options = {
 	0,	//write loopback data for basic testing
 	0,	//offaxis-encoder
 	0,	//fsr-sensor
-	1	//temp-sensor
+	0	//temp-sensor
 };
 
 std::string gl_csvheader;

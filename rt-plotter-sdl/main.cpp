@@ -4,7 +4,6 @@ and may not be redistributed without written permission.*/
 //Using SDL and standard IO
 #include <SDL.h>
 #include <stdio.h>
-#include <math.h>
 #include <vector>
 #include "winserial.h"
 #include "PPP.h"
@@ -12,9 +11,7 @@ and may not be redistributed without written permission.*/
 #include "args-parsing.h"
 #include <algorithm>
 #include "fsrs.h"
-
-#define PAYLOAD_SIZE 512
-#define UNSTUFFING_BUFFER_SIZE (PAYLOAD_SIZE * 2 + 2)
+#include "ppp-parsing.h"
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 1200;
@@ -26,96 +23,6 @@ typedef struct fpoint_t
 	float y;
 }fpoint_t;
 
-static int gl_ppp_bidx = 0;
-static uint8_t gl_ppp_payload_buffer[PAYLOAD_SIZE] = { 0 };	//buffer
-static uint8_t gl_ppp_unstuffing_buffer[UNSTUFFING_BUFFER_SIZE] = { 0 };
-static uint8_t gl_ser_readbuf[512] = { 0 };
-static float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
-
-
-/*
-Generic hex checksum calculation.
-TODO: use this in the psyonic API
-*/
-uint32_t fletchers_checksum32(uint32_t* arr, int size)
-{
-	int32_t checksum = 0;
-	int32_t fchk = 0;
-	for (int i = 0; i < size; i++)
-	{
-		checksum += (int32_t)arr[i];
-		fchk += checksum;
-	}
-	return fchk;
-}
-
-
-/*
-* Inputs:
-*	input_buf: raw unstuffed data buffer
-* Outputs:
-*	parsed_data: floats, parsed from input buffer
-* Returns: number of parsed values
-*/
-void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parsed_data, int * parsed_data_size)
-{
-	uint32_t* pbu32 = (uint32_t*)(&input_buf[0]);
-	int32_t* pbi32 = (int32_t*)(&input_buf[0]);
-	int wordsize = payload_size / sizeof(uint32_t);
-	int i = 0;
-	for (i = 0; i < wordsize; i++)
-	{
-		parsed_data[i] = ((float)pbi32[i]);
-		//printf("%d ", pbi32[i]);
-	}
-	//printf("\n");
-	//parsed_data[i] = ((float)pbu32[i]) / 1000.f;
-
-	*parsed_data_size = wordsize;
-}
-
-
-/*
-* Inputs:
-*	input_buf: raw unstuffed data buffer
-* Outputs:
-*	parsed_data: floats, parsed from input buffer
-* Returns: number of parsed values
-*/
-void parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data, int * parsed_data_size)
-{
-	uint32_t* pbu32 = (uint32_t*)(&input_buf[0]);
-	int32_t* pbi32 = (int32_t*)(&input_buf[0]);
-	int wordsize = payload_size / sizeof(uint32_t);
-	int i = 0;
-	for (i = 0; i < wordsize - 1; i++)
-	{
-		parsed_data[i] = ((float)pbi32[i]);
-		//printf("%d ", pbi32[i]);
-	}
-	//printf("\n");
-	parsed_data[i] = ((float)pbu32[i]) / 1000.f;
-
-	*parsed_data_size = wordsize;
-}
-void parse_PPP_tempsensor(uint8_t* input_buf, int payload_size, float* parsed_data, int* parsed_data_size)
-{
-	uint32_t* pbu32 = (uint32_t*)(&input_buf[0]);
-	int32_t* pbi32 = (int32_t*)(&input_buf[0]);
-	int wordsize = payload_size / sizeof(uint32_t);
-	int i = 0;
-
-	float rawtemp = (float)pbi32[0];
-	float mV = ((rawtemp * 3.3f) / 4096.f) * 1000.f;
-	float Temp = (5.f / 44.f) * ((5.f * sqrt(9111265.f - 1760.f * mV)) - 13501.f);
-	parsed_data[0] = Temp;
-	for (i = 1; i < wordsize - 1; i++)
-	{
-		parsed_data[i] = 0;
-	}
-	parsed_data[wordsize-1] = ((float)pbu32[i]) / 1000.f;
-	*parsed_data_size = wordsize;
-}
 
 uint64_t dummy_loopback_txts = 0;
 void write_dummy_loopback(HANDLE*pSer)
@@ -140,59 +47,6 @@ void write_dummy_loopback(HANDLE*pSer)
 	}
 }
 
-void text_only(HANDLE*pSer)
-{
-	int pld_size = 0;
-	int previous_wordsize = 0;
-	int wordsize = 0;
-	int wordsize_match_count = 0;
-	
-	while (1)
-	{
-		if (gl_options.write_dummy_loopback)
-		{
-			write_dummy_loopback(pSer);
-		}
-		LPDWORD num_bytes_read = 0;
-		pld_size = 0;
-		int rc = ReadFile(*pSer, gl_ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
-		for (int i = 0; i < (int)num_bytes_read; i++)
-		{
-			uint8_t new_byte = gl_ser_readbuf[i];
-			pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
-			if (pld_size > 0)
-			{
-				parse_PPP_values_noscale(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
-
-				//obtain consecutive matching counts
-				if (wordsize == previous_wordsize && wordsize > 0)
-				{
-					wordsize_match_count++;
-					for (int fvidx = 0; fvidx < wordsize; fvidx++)
-					{
-						if (gl_options.print_in_parser == 0)
-						{
-							float val = gl_valdump[fvidx]*gl_options.parser_yscale;
-							if (val >= 0)
-								printf("+%0.6f", val);
-							else
-								printf("%0.6f", val);
-							
-							if (fvidx <  (wordsize - 1))
-								printf(", ");
-						}
-					}
-					printf("\n");
-				}
-				else
-				{
-					wordsize_match_count = 0;
-				}
-				previous_wordsize = wordsize;
-			}
-		}
-	}
-}
 
 
 int main(int argc, char* args[])

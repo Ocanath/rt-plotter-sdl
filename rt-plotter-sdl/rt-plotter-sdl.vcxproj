@@ -149,6 +149,7 @@
     <ClCompile Include="colors.cpp" />
     <ClCompile Include="fsrs.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ppp-parsing.cpp" />
     <ClCompile Include="PPP.cpp" />
     <ClCompile Include="winserial.cpp" />
   </ItemGroup>
@@ -156,6 +157,7 @@
     <ClInclude Include="args-parsing.h" />
     <ClInclude Include="colors.h" />
     <ClInclude Include="fsrs.h" />
+    <ClInclude Include="ppp-parsing.h" />
     <ClInclude Include="u32_fmt_t.h" />
     <ClInclude Include="PPP.h" />
     <ClInclude Include="winserial.h" />

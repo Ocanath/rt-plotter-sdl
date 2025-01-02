@@ -33,6 +33,9 @@
     <ClCompile Include="fsrs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ppp-parsing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="winserial.h">
@@ -51,6 +54,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="fsrs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ppp-parsing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
