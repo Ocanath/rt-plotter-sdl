@@ -15,14 +15,14 @@ typedef union
 packed_sensor_data_t gl_tx_buf = { 0 };
 
 
-void offaxis_encoder_parser(HANDLE* pSer, uint8_t * serial_readbuf, uint8_t * ppp_unstuffing_buffer, int unstuffing_size, int * ppp_bidx)
+void offaxis_encoder_parser(uint8_t * serial_readbuf, uint8_t * ppp_unstuffing_buffer, int unstuffing_size, int * ppp_bidx)
 {
 	int pld_size = 0;
 	while (1)
 	{
-		LPDWORD num_bytes_read = 0;
+		
 		pld_size = 0;
-		int rc = ReadFile(*pSer, serial_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
+		int num_bytes_read = read_serial(serial_readbuf);
 		for (int i = 0; i < (int)num_bytes_read; i++)
 		{
 			uint8_t new_byte = serial_readbuf[i];
