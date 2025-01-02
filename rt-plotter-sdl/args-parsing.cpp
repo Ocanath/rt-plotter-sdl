@@ -46,7 +46,7 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 			if (strcmp("--spread-lines", argv[i]) == 0)
 			{
 				popts->spread_lines = 1;
-				sprintf_s(printstr, sizeof(printstr), "Spreading lines\r\n");
+				snprintf(printstr, sizeof(printstr), "Spreading lines\r\n");
 			}
 			if (strcmp("--baudrate", argv[i]) == 0)
 			{
@@ -55,11 +55,11 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				{
 					int value = strtol(argv[i + 1], &tmp, 10);
 					popts->baud_rate = value;
-					sprintf_s(printstr, sizeof(printstr),  "Overriding baudrate as %d\r\n", popts->baud_rate);
+					snprintf(printstr, sizeof(printstr),  "Overriding baudrate as %d\r\n", popts->baud_rate);
 				}
 				else
 				{
-					sprintf_s(printstr, sizeof(printstr),  "invalid baudrate format\r\n");
+					snprintf(printstr, sizeof(printstr),  "invalid baudrate format\r\n");
 				}
 			}
 			if (strcmp("--yscale", argv[i]) == 0)
@@ -68,11 +68,11 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				{
 					float value = strtof(argv[i + 1], &tmp);
 					popts->yscale = value;
-					sprintf_s(printstr, sizeof(printstr),  "Overriding yscale as %f\r\n", popts->yscale);
+					snprintf(printstr, sizeof(printstr),  "Overriding yscale as %f\r\n", popts->yscale);
 				}
 				else
 				{
-					sprintf_s(printstr, sizeof(printstr),  "invalid yscale format\r\n");
+					snprintf(printstr, sizeof(printstr),  "invalid yscale format\r\n");
 				}
 			}
 			if (strcmp("--pyscale", argv[i]) == 0)
@@ -81,11 +81,11 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				{
 					float value = strtof(argv[i + 1], &tmp);
 					popts->parser_yscale = value;
-					sprintf_s(printstr, sizeof(printstr), "Overriding console print yscale as %f\r\n", popts->parser_yscale);
+					snprintf(printstr, sizeof(printstr), "Overriding console print yscale as %f\r\n", popts->parser_yscale);
 				}
 				else
 				{
-					sprintf_s(printstr, sizeof(printstr), "invalid yscale format\r\n");
+					snprintf(printstr, sizeof(printstr), "invalid yscale format\r\n");
 				}
 			}
 			if (strcmp("--parsermod", argv[i]) == 0)
@@ -93,11 +93,11 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				if (argc > (i + 1))
 				{
 					popts->print_in_parser_every_n = (int)strtol(argv[i + 1], &tmp, 10);
-					sprintf_s(printstr, sizeof(printstr), "Overriding console print yscale as %d\r\n", popts->print_in_parser_every_n);
+					snprintf(printstr, sizeof(printstr), "Overriding console print yscale as %d\r\n", popts->print_in_parser_every_n);
 				}
 				else
 				{
-					sprintf_s(printstr, sizeof(printstr), "invalid yscale format\r\n");
+					snprintf(printstr, sizeof(printstr), "invalid yscale format\r\n");
 				}
 			}
 			if (strcmp("--nwidth", argv[i]) == 0)
@@ -108,16 +108,16 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 					if (value > 0 && value < 10000)
 					{
 						popts->num_widths = value;
-						sprintf_s(printstr, sizeof(printstr), "Overriding width arg to %d\r\n", popts->num_widths);
+						snprintf(printstr, sizeof(printstr), "Overriding width arg to %d\r\n", popts->num_widths);
 					}
 					else
 					{
-						sprintf_s(printstr, sizeof(printstr), "error: value out of bounds\r\n");
+						snprintf(printstr, sizeof(printstr), "error: value out of bounds\r\n");
 					}
 				}
 				else
 				{
-					sprintf_s(printstr, sizeof(printstr), "invalid yscale format\r\n");
+					snprintf(printstr, sizeof(printstr), "invalid yscale format\r\n");
 				}
 			}
 			if (strcmp("--printvals", argv[i]) == 0)
@@ -135,27 +135,27 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 			if (strcmp("--xy-mode", argv[i]) == 0)
 			{
 				popts->xy_mode = 1;
-				sprintf_s(printstr, sizeof(printstr),  "Using xy mode...\r\n");
+				snprintf(printstr, sizeof(printstr),  "Using xy mode...\r\n");
 			}
 			if (strcmp("--loopback", argv[i]) == 0)
 			{
 				popts->write_dummy_loopback = 1;
-				sprintf_s(printstr, sizeof(printstr), "Writing Dummy Data...\r\n");
+				snprintf(printstr, sizeof(printstr), "Writing Dummy Data...\r\n");
 			}
 			if (strcmp("--offaxis-encoder", argv[i]) == 0)
 			{
 				popts->offaxis_encoder = 1;
-				sprintf_s(printstr, sizeof(printstr), "Parsing as offaxis encoder\r\n");
+				snprintf(printstr, sizeof(printstr), "Parsing as offaxis encoder\r\n");
 			}
 			if(strcmp("--fsr", argv[i]) == 0)
 			{
 				popts->fsr_sensor = 1;
-				sprintf_s(printstr, sizeof(printstr), "Parsing as fsr sensor\r\n");
+				snprintf(printstr, sizeof(printstr), "Parsing as fsr sensor\r\n");
 			}
 			if (strcmp("--tempsensor", argv[i]) == 0)
 			{
 				popts->temp_sensor = 1;
-				sprintf_s(printstr, sizeof(printstr), "\r\n");
+				snprintf(printstr, sizeof(printstr), "\r\n");
 			}
 			if (strcmp("--help", argv[i]) == 0)
 			{

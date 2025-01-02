@@ -25,7 +25,7 @@ typedef struct fpoint_t
 
 
 uint64_t dummy_loopback_txts = 0;
-void write_dummy_loopback(HANDLE*pSer)
+void write_dummy_loopback(void)
 {
 	uint64_t tick = SDL_GetTicks64();
 	if (tick - dummy_loopback_txts > 5)
@@ -42,8 +42,7 @@ void write_dummy_loopback(HANDLE*pSer)
 		vals[idx++] = (int32_t)(c1 * 4096.);
 		vals[idx++] = tick;
 		int num_bytes = PPP_stuff((uint8_t*)vals, sizeof(int32_t) * idx, stuff_buf, sizeof(stuff_buf));
-		LPDWORD written = 0;
-		int wfrc = WriteFile(*pSer, stuff_buf, num_bytes, written, NULL);
+		serial_write(stuff_buf, num_bytes);
 	}
 }
 
@@ -52,29 +51,7 @@ void write_dummy_loopback(HANDLE*pSer)
 int main(int argc, char* args[])
 {
 	parse_args(argc, args, &gl_options);
-	HANDLE serialport;
-	char namestr[16] = { 0 };
-	uint8_t found = 0;
-	for (int i = 0; i < 255; i++)
-	{
-		int rl = sprintf_s(namestr, "\\\\.\\COM%d", i);
-		int rc = connect_to_usb_serial(&serialport, namestr, gl_options.baud_rate);
-		if (rc != 0)
-		{
-			if (!(gl_options.csv_header == 1 && (gl_options.print_only == 1 || gl_options.print_in_parser == 1)))
-			{
-				printf("Connected to COM port %s successfully\n", namestr);
-			}
-			found = 1;
-			break;
-		}
-	}
-	if (found == 0)
-	{
-		if(gl_options.csv_header == 0)
-			printf("No COM ports found\n");
-	}
-
+	autoconnect_serial();
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
 
@@ -140,12 +117,12 @@ int main(int argc, char* args[])
 				uint8_t new_pkt = 0;
 				if (gl_options.write_dummy_loopback)
 				{
-					write_dummy_loopback(&serialport);
+					write_dummy_loopback();
 				}
 
-				LPDWORD num_bytes_read = 0;
+				
 				pld_size = 0;
-				int rc = ReadFile(serialport, gl_ser_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
+				int num_bytes_read = read_serial(gl_ser_readbuf);				
 				for (int i = 0; i < (int)num_bytes_read; i++)
 				{
 					uint8_t new_byte = gl_ser_readbuf[i];
@@ -232,22 +209,9 @@ int main(int argc, char* args[])
 
 					}
 
-					{	//obtain a new xscale.
-						//float mintime = 10000000000000.f;
-						//float maxtime = 0.f;
-						//for (int line = 0; line < fpoints_lines.size(); line++)
-						//{
-						//	float max_candidate = fpoints_lines[line][dbufsize - 1].x;
-						//	float min_candidate = fpoints_lines[line][0].x;
-						//	if (max_candidate > maxtime)
-						//		maxtime = max_candidate;
-						//	if (min_candidate < mintime)
-						//		mintime = min_candidate;
-						//}
-						if (gl_options.xy_mode == 0)
-						{
-							xscale = ((float)SCREEN_WIDTH) / (fpoints_lines[0][dbufsize - 1].x - fpoints_lines[0][0].x);
-						}
+					if (gl_options.xy_mode == 0)
+					{
+						xscale = ((float)SCREEN_WIDTH) / (fpoints_lines[0][dbufsize - 1].x - fpoints_lines[0][0].x);
 					}
 
 					for (int line = 0; line < fpoints_lines.size(); line++)
@@ -361,7 +325,7 @@ int main(int argc, char* args[])
 	//Quit SDL subsystems
 	SDL_Quit();
 
-	//close serial port
-	CloseHandle(serialport);
+	close_serial();
+
 	return 0;
 }
