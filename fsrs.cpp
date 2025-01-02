@@ -15,6 +15,7 @@ typedef union
 packed_sensor_data_t gl_tx_buf = { 0 };
 
 
+
 uint32_t parsecouter = 0;
 const uint32_t num_samples_to_skip_plotting = 100;
 void parse_PPP_offaxis_encoder(uint8_t * input_buf, int payload_size, float * parsed_data, int* parsed_data_size, uint64_t ms_tick)
@@ -66,32 +67,31 @@ void parse_PPP_fsr_sensor(uint8_t* input_buf, int payload_size, float* parsed_da
 }
 
 
+// void offaxis_encoder_parser(HANDLE* pSer, uint8_t * serial_readbuf, uint8_t * ppp_unstuffing_buffer, int unstuffing_size, int * ppp_bidx)
+// {
+// 	int pld_size = 0;
+// 	while (1)
+// 	{
+// 		LPDWORD num_bytes_read = 0;
+// 		pld_size = 0;
+// 		int rc = ReadFile(*pSer, serial_readbuf, 512, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
+// 		for (int i = 0; i < (int)num_bytes_read; i++)
+// 		{
+// 			uint8_t new_byte = serial_readbuf[i];
+// 			pld_size = parse_PPP_stream(new_byte, gl_tx_buf.u8, sizeof(packed_sensor_data_t), ppp_unstuffing_buffer, unstuffing_size, ppp_bidx);
+// 			if (pld_size > 0)
+// 			{
+// 				//for (int i = 0; i < pld_size; i++)
+// 				//{
+// 				//	printf("%.2X", gl_tx_buf.u8[i]);
+// 				//}
+// 				//printf("\n");
+// 				float rawtemp = gl_tx_buf.i16[6];
+// 				float mV = ((rawtemp * 3.3f) / 4096.f)*1000.f;
+// 				float Temp = (5.f / 44.f) * ((5.f * sqrt(9111265.f - 1760.f * mV)) - 13501.f);
 
-//void offaxis_encoder_parser(uint8_t * serial_readbuf, uint8_t * ppp_unstuffing_buffer, int unstuffing_size, int * ppp_bidx)
-//{
-//	int pld_size = 0;
-//	while (1)
-//	{
-//		
-//		pld_size = 0;
-//		int num_bytes_read = read_serial(serial_readbuf);
-//		for (int i = 0; i < (int)num_bytes_read; i++)
-//		{
-//			uint8_t new_byte = serial_readbuf[i];
-//			pld_size = parse_PPP_stream(new_byte, gl_tx_buf.u8, sizeof(packed_sensor_data_t), ppp_unstuffing_buffer, unstuffing_size, ppp_bidx);
-//			if (pld_size > 0)
-//			{
-//				//for (int i = 0; i < pld_size; i++)
-//				//{
-//				//	printf("%.2X", gl_tx_buf.u8[i]);
-//				//}
-//				//printf("\n");
-//				float rawtemp = gl_tx_buf.i16[6];
-//				float mV = ((rawtemp * 3.3f) / 4096.f)*1000.f;
-//				float Temp = (5.f / 44.f) * ((5.f * sqrt(9111265.f - 1760.f * mV)) - 13501.f);
-//
-//				printf("Temperature C = %f\n", Temp);
-//			}
-//		}
-//	}
-//}
+// 				printf("Temperature C = %f\n", Temp);
+// 			}
+// 		}
+// 	}
+// }

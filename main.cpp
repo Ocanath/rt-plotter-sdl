@@ -1,11 +1,7 @@
-/*This source code copyrighted by Lazy Foo' Productions 2004-2023
-and may not be redistributed without written permission.*/
-
-//Using SDL and standard IO
-#include <SDL.h>
+#include "SDL2/SDL.h"
 #include <stdio.h>
 #include <vector>
-#include "winserial.h"
+#include "linux-serial.h"
 #include "PPP.h"
 #include "colors.h"
 #include "args-parsing.h"
@@ -97,7 +93,7 @@ int main(int argc, char* args[])
 
 				
 				pld_size = 0;
-				int num_bytes_read = read_serial(gl_ser_readbuf);				
+				int num_bytes_read = read_serial(gl_ser_readbuf, sizeof(gl_ser_readbuf));				
 				for (int i = 0; i < (int)num_bytes_read; i++)
 				{
 					uint8_t new_byte = gl_ser_readbuf[i];

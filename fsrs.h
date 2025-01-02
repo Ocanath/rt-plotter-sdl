@@ -2,7 +2,6 @@
 #define FSRS_H
 #include <stdint.h>
 
-
 #define NUM_FSR_PER_FINGER 6
 
 void parse_PPP_offaxis_encoder(uint8_t * input_buf, int payload_size, float * parsed_data, int* parsed_data_size, uint64_t ms_tick);
