@@ -7,20 +7,23 @@
 cmd_options_t gl_options = {
 	0,	//spread lines
 	460800,	//baud rate
-	400/(4096.f),	//yscale,
-	1,	//print values to console
+	1,	//yscale,
+	0,	//print values to console
 	0, //print values to console ONLY (no actual plotting!)
 	0, //print in parser flag active
 	0,	//xy mode
 	0,	//csv header
-	(1.f/4096.f),
-	10,
-	3
+	1.f, //console scaler
+	1,	//integer modulo for plotting printing
+	3,	//number of widths
+	0,	//write loopback data for basic testing
+	0,	//offaxis-encoder
+	0,	//fsr-sensor
+	0	//temp-sensor
 };
 
 std::string gl_csvheader;
 static char printstr[128] = { 0 };
-
 /*
 * Parse any and all arguments coming in
 */
@@ -43,7 +46,7 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 			if (strcmp("--spread-lines", argv[i]) == 0)
 			{
 				popts->spread_lines = 1;
-				sprintf(printstr, "Spreading lines\r\n");
+				snprintf(printstr, sizeof(printstr), "Spreading lines\r\n");
 			}
 			if (strcmp("--baudrate", argv[i]) == 0)
 			{
@@ -52,11 +55,11 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				{
 					int value = strtol(argv[i + 1], &tmp, 10);
 					popts->baud_rate = value;
-					sprintf(printstr, "Overriding baudrate as %d\r\n", popts->baud_rate);
+					snprintf(printstr, sizeof(printstr),  "Overriding baudrate as %d\r\n", popts->baud_rate);
 				}
 				else
 				{
-					sprintf(printstr, "invalid baudrate format\r\n");
+					snprintf(printstr, sizeof(printstr),  "invalid baudrate format\r\n");
 				}
 			}
 			if (strcmp("--yscale", argv[i]) == 0)
@@ -65,11 +68,11 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				{
 					float value = strtof(argv[i + 1], &tmp);
 					popts->yscale = value;
-					sprintf(printstr, "Overriding yscale as %f\r\n", popts->yscale);
+					snprintf(printstr, sizeof(printstr),  "Overriding yscale as %f\r\n", popts->yscale);
 				}
 				else
 				{
-					sprintf(printstr, "invalid yscale format\r\n");
+					snprintf(printstr, sizeof(printstr),  "invalid yscale format\r\n");
 				}
 			}
 			if (strcmp("--pyscale", argv[i]) == 0)
@@ -78,11 +81,11 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				{
 					float value = strtof(argv[i + 1], &tmp);
 					popts->parser_yscale = value;
-					sprintf(printstr, "Overriding console print yscale as %f\r\n", popts->parser_yscale);
+					snprintf(printstr, sizeof(printstr), "Overriding console print yscale as %f\r\n", popts->parser_yscale);
 				}
 				else
 				{
-					sprintf(printstr, "invalid yscale format\r\n");
+					snprintf(printstr, sizeof(printstr), "invalid yscale format\r\n");
 				}
 			}
 			if (strcmp("--parsermod", argv[i]) == 0)
@@ -90,11 +93,11 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 				if (argc > (i + 1))
 				{
 					popts->print_in_parser_every_n = (int)strtol(argv[i + 1], &tmp, 10);
-					sprintf(printstr, "Overriding console print yscale as %d\r\n", popts->print_in_parser_every_n);
+					snprintf(printstr, sizeof(printstr), "Overriding console print yscale as %d\r\n", popts->print_in_parser_every_n);
 				}
 				else
 				{
-					sprintf(printstr, "invalid yscale format\r\n");
+					snprintf(printstr, sizeof(printstr), "invalid yscale format\r\n");
 				}
 			}
 			if (strcmp("--nwidth", argv[i]) == 0)
@@ -105,16 +108,16 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 					if (value > 0 && value < 10000)
 					{
 						popts->num_widths = value;
-						sprintf(printstr, "Overriding width arg to %d\r\n", popts->num_widths);
+						snprintf(printstr, sizeof(printstr), "Overriding width arg to %d\r\n", popts->num_widths);
 					}
 					else
 					{
-						sprintf(printstr, "error: value out of bounds\r\n");
+						snprintf(printstr, sizeof(printstr), "error: value out of bounds\r\n");
 					}
 				}
 				else
 				{
-					sprintf(printstr, "invalid yscale format\r\n");
+					snprintf(printstr, sizeof(printstr), "invalid yscale format\r\n");
 				}
 			}
 			if (strcmp("--printvals", argv[i]) == 0)
@@ -132,11 +135,37 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 			if (strcmp("--xy-mode", argv[i]) == 0)
 			{
 				popts->xy_mode = 1;
-				sprintf(printstr, "Using xy mode...\r\n");
+				snprintf(printstr, sizeof(printstr),  "Using xy mode...\r\n");
+			}
+			if (strcmp("--loopback", argv[i]) == 0)
+			{
+				popts->write_dummy_loopback = 1;
+				snprintf(printstr, sizeof(printstr), "Writing Dummy Data...\r\n");
+			}
+			if (strcmp("--offaxis-encoder", argv[i]) == 0)
+			{
+				popts->offaxis_encoder = 1;
+				snprintf(printstr, sizeof(printstr), "Parsing as offaxis encoder\r\n");
+			}
+			if(strcmp("--fsr", argv[i]) == 0)
+			{
+				popts->fsr_sensor = 1;
+				snprintf(printstr, sizeof(printstr), "Parsing as fsr sensor\r\n");
+			}
+			if (strcmp("--tempsensor", argv[i]) == 0)
+			{
+				popts->temp_sensor = 1;
+				snprintf(printstr, sizeof(printstr), "\r\n");
+			}
+			if (strcmp("--help", argv[i]) == 0)
+			{
+				printf("Commands:\n");
+				printf("--csv-header \"arg\"			for using > to dump to a.csv file.The arg is the first line.Put in quotes\n");
+				printf("--csv-header \"arg\"			for using > to dump to a.csv file.The arg is the first line.Put in quotes\n");
 			}
 			if (popts->csv_header == 0)
 			{
-				printf("%s", printstr);
+				printf(printstr);
 				memset(printstr, 0, sizeof(printstr));
 			}
 		}
