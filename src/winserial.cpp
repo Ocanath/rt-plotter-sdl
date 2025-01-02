@@ -1,7 +1,7 @@
 #include "winserial.h"
-#include <stdint.h>
 #include<stdio.h>
-
+#include "args-parsing.h"
+#include "ppp-parsing.h"
 
 int connect_to_usb_serial(HANDLE* serial_handle, const char* com_port_name, unsigned long baud)
 {
@@ -30,4 +30,48 @@ int connect_to_usb_serial(HANDLE* serial_handle, const char* com_port_name, unsi
 		SetCommTimeouts((*serial_handle), &timeouts);
 	}
 	return rc;
+}
+
+
+HANDLE serialport;
+
+int autoconnect_serial(void)
+{
+	char namestr[16] = { 0 };
+	for (int i = 0; i < 255; i++)
+	{
+		int rl = sprintf_s(namestr, "\\\\.\\COM%d", i);
+		int rc = connect_to_usb_serial(&serialport, namestr, gl_options.baud_rate);
+		if (rc != 0)
+		{
+			if (!(gl_options.csv_header == 1 && (gl_options.print_only == 1 || gl_options.print_in_parser == 1)))
+			{
+				printf("Connected to COM port %s successfully\n", namestr);
+			}
+			return 1;
+		}
+	}
+	if (gl_options.csv_header == 0)
+		printf("No COM ports found\n");
+	return 0;
+}
+
+int serial_write(uint8_t* data, int size)
+{
+	LPDWORD written = 0;
+	int wfrc = WriteFile(&serialport, data, size, written, NULL);
+	return (int)written;
+}
+
+int read_serial(uint8_t * readbuf)
+{
+	LPDWORD num_bytes_read = 0;
+	int rc = ReadFile(serialport, readbuf, PAYLOAD_SIZE, (LPDWORD)(&num_bytes_read), NULL);	//
+	return (int)num_bytes_read;
+}
+
+void close_serial(void)
+{
+	//close serial port
+	CloseHandle(serialport);
 }
