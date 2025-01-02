@@ -15,6 +15,7 @@ extern float gl_valdump[PAYLOAD_SIZE / sizeof(float)];
 void parse_PPP_values_noscale(uint8_t* input_buf, int payload_size, float* parsed_data, int* parsed_data_size);
 void parse_PPP_values(uint8_t* input_buf, int payload_size, float* parsed_data, int* parsed_data_size);
 void parse_PPP_tempsensor(uint8_t* input_buf, int payload_size, float* parsed_data, int* parsed_data_size);
+void write_dummy_loopback(uint64_t tick);
 
 
 #endif // !PPP_PARSING_H
