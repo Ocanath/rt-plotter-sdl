@@ -44,7 +44,7 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 # SDL2 Setup
 if(WIN32)
     # Path to your local SDL2 copy
-    set(SDL2_DIR "${CMAKE_SOURCE_DIR}/path/to/local/SDL2")
+    set(SDL2_DIR "${CMAKE_SOURCE_DIR}/SDL")
 
     # Determine the target architecture
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)

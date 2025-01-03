@@ -63,10 +63,10 @@ int serial_write(uint8_t* data, int size)
 	return (int)written;
 }
 
-int read_serial(uint8_t * readbuf)
+int read_serial(uint8_t * readbuf, int bufsize)
 {
 	LPDWORD num_bytes_read = 0;
-	int rc = ReadFile(serialport, readbuf, PAYLOAD_SIZE, (LPDWORD)(&num_bytes_read), NULL);	//
+	int rc = ReadFile(serialport, readbuf, bufsize, (LPDWORD)(&num_bytes_read), NULL);	//
 	return (int)num_bytes_read;
 }
 
