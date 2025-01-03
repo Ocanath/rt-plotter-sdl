@@ -1,7 +1,13 @@
 #include "SDL2/SDL.h"
 #include <stdio.h>
 #include <vector>
+
+#ifdef PLATFORM_WINDOWS
+#include "winserial.h"
+#elif defined(PLATFORM_LINUX)
 #include "linux-serial.h"
+#endif
+
 #include "PPP.h"
 #include "colors.h"
 #include "args-parsing.h"

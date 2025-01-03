@@ -1,6 +1,12 @@
 #include "ppp-parsing.h"
 #include <math.h>
+
+#ifdef PLATFORM_WINDOWS
+#include "winserial.h"
+#elif defined(PLATFORM_LINUX)
 #include "linux-serial.h"
+#endif
+
 #include "PPP.h"
 
 int gl_ppp_bidx = 0;
