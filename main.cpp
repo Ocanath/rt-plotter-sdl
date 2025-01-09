@@ -148,8 +148,7 @@ int main(int argc, char* args[])
 									for (int fvidx = 0; fvidx < wordsize; fvidx++)
 									{
 										float val = gl_valdump[fvidx] * gl_options.parser_yscale;
-										if (val >= 0)
-											printf("%0.6f", val);
+										printf("%0.6f", val);
 										if (fvidx < (wordsize - 1))
 											printf(", ");
 									}
