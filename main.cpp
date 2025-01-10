@@ -81,6 +81,8 @@ int main(int argc, char* args[])
 			uint32_t view_size = 0;
 			int gl_selected_channel = 0;
 			int number_of_frames_buffered = 0;
+			uint64_t new_pkt_received_ts = 0;
+			uint8_t timeout_occurred = 0;
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -193,6 +195,18 @@ int main(int argc, char* args[])
 						}
 
 					}
+					{
+						uint64_t time_since_last_new_packet = (tick - new_pkt_received_ts);
+						if (time_since_last_new_packet > 400)
+						{
+							timeout_occurred = 1;
+						}
+						if (timeout_occurred != 0 && time_since_last_new_packet < 100)
+						{
+							timeout_occurred = 0;
+							number_of_frames_buffered = 0;
+						}
+					}
 
 					if(new_pkt)
 					{
@@ -201,10 +215,16 @@ int main(int argc, char* args[])
 						{
 							number_of_frames_buffered = dbufsize - 1;
 						}
+						new_pkt_received_ts = tick;
 					}
 
 					int last_idx = dbufsize - 1;	//most recent value
 					int begin_idx = dbufsize - number_of_frames_buffered;
+					//sanity bounds check. When the number of buffered frames is zero the above math would overrun
+					if (begin_idx > last_idx)
+						begin_idx = last_idx;
+					if (begin_idx < 0)
+						begin_idx = 0;
 
 					for (int line = 0; line < fpoints_lines.size(); line++)
 					{	
