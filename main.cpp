@@ -80,7 +80,7 @@ int main(int argc, char* args[])
 			int cycle_count_for_printing = 0;
 			uint32_t view_size = 0;
 			int gl_selected_channel = 0;
-
+			int number_of_frames_buffered = 0;
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -181,14 +181,30 @@ int main(int argc, char* args[])
 						if (fpoints_lines.size() != num_lines)
 						{
 							fpoints_lines.resize(num_lines, std::vector<fpoint_t>(dbufsize));
+							for (int line = 0; line < num_lines; line++)
+							{
+								for (int vidx = 0; vidx < dbufsize; vidx++)
+								{
+									fpoints_lines[line][vidx].x = 0;
+									fpoints_lines[line][vidx].y = 0;
+								}
+							}
+							number_of_frames_buffered = 0;
 						}
 
 					}
 
-					if (gl_options.xy_mode == 0)
+					if(new_pkt)
 					{
-						xscale = ((float)SCREEN_WIDTH) / (fpoints_lines[0][dbufsize - 1].x - fpoints_lines[0][0].x);
+						number_of_frames_buffered++;	//maximum value is dbufsize
+						if (number_of_frames_buffered >= dbufsize)
+						{
+							number_of_frames_buffered = dbufsize - 1;
+						}
 					}
+
+					int last_idx = dbufsize - 1;	//most recent value
+					int begin_idx = dbufsize - number_of_frames_buffered;
 
 					for (int line = 0; line < fpoints_lines.size(); line++)
 					{	
@@ -231,7 +247,18 @@ int main(int argc, char* args[])
 							div_center = (float)SCREEN_HEIGHT / 2;
 						}
 
-						for (int i = 0; i < points.size(); i++)
+						if (line == 0)
+						{
+							if (gl_options.xy_mode == 0)
+							{
+								float div = (fpoints_lines[0][last_idx].x - fpoints_lines[0][begin_idx].x);
+								if (div > 0)
+									xscale = ((float)SCREEN_WIDTH) / div;
+								//printf("%f\n", xscale);
+							}
+						}
+
+						for (int i = begin_idx; i < dbufsize; i++)
 						{
 							if (gl_options.spread_lines)
 							{
@@ -239,7 +266,7 @@ int main(int argc, char* args[])
 							}
 							if (gl_options.xy_mode == 0)
 							{
-								points[i].x = (int)(((*pFpoints)[i].x - (*pFpoints)[0].x) * xscale);
+								points[i].x = (int)(((*pFpoints)[i].x - (*pFpoints)[begin_idx].x) * xscale);
 								points[i].y = SCREEN_HEIGHT - ((int)((*pFpoints)[i].y * gl_options.yscale) + div_center);
 							}
 							else
@@ -249,7 +276,7 @@ int main(int argc, char* args[])
 							}
 						}
 						if (pRenderer != NULL)
-							SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[0]), dbufsize);
+							SDL_RenderDrawLines(pRenderer, (SDL_Point*)(&points[begin_idx]), dbufsize-begin_idx);
 					}
 					if (pRenderer != NULL)
 						SDL_RenderPresent(pRenderer);				
