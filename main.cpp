@@ -254,7 +254,6 @@ int main(int argc, char* args[])
 								float div = (fpoints_lines[0][last_idx].x - fpoints_lines[0][begin_idx].x);
 								if (div > 0)
 									xscale = ((float)SCREEN_WIDTH) / div;
-								//printf("%f\n", xscale);
 							}
 						}
 
