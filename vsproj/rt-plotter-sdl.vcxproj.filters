@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\args-parsing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\colors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\fsrs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\PPP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\ppp-parsing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\winserial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\args-parsing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\colors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\fsrs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\PPP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\ppp-parsing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\u32_fmt_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\winserial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{BA4E2550-DC9B-3E8E-B93C-5856EB7E7FCB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{AFBF823B-4FB3-3FFB-8640-FE2E9A20A07E}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
