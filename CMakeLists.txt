@@ -16,6 +16,7 @@ set(SOURCES
     main.cpp
     PPP.cpp
     ppp-parsing.cpp
+	magsensor.cpp
 )
 
 set(HEADERS
@@ -25,6 +26,7 @@ set(HEADERS
     PPP.h
     ppp-parsing.h
     u32_fmt_t.h
+	magsensor.h
 )
 
 # Platform-specific source files
