@@ -26,6 +26,31 @@ typedef struct fpoint_t
 	float y;
 }fpoint_t;
 
+double gain_res_xy[8][4] = {
+	{0.751, 1.502, 3.004, 6.009},
+	{0.601, 1.202, 2.403, 4.840},
+	{0.451, 0.901, 1.803, 3.605},
+	{0.376, 0.751, 1.502, 3.004},
+	{0.300, 0.601, 1.202, 2.403},
+	{0.250, 0.501, 1.001, 2.003},
+	{0.200, 0.401, 0.801, 1.602},
+	{0.150, 0.300, 0.601, 1.202}
+};
+
+double gain_res_z[8][4] = {
+	{1.210, 2.420, 4.840, 9.680},
+	{0.968, 1.936, 3.872, 7.744},
+	{0.726, 1.452, 2.904, 5.808},
+	{0.605, 1.210, 2.420, 4.840},
+	{0.484, 0.968, 1.936, 3.872},
+	{0.403, 0.807, 1.613, 3.227},
+	{0.323, 0.645, 1.291, 2.581},
+	{0.242, 0.484, 0.968, 1.936}
+};
+
+
+
+
 int main(int argc, char* args[])
 {
 	parse_args(argc, args, &gl_options);
@@ -129,7 +154,6 @@ int main(int argc, char* args[])
 					pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
 					if (pld_size > 0)
 					{
-						write_override = 1;
 						if (gl_options.offaxis_encoder)
 						{
 							parse_PPP_offaxis_encoder(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize, SDL_GetTicks64());
@@ -150,6 +174,13 @@ int main(int argc, char* args[])
 							if (gl_options.xy_mode == 0)
 							{
 								parse_PPP_values(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize);
+								if (gl_options.mlx_sensor)
+								{
+									write_override = 1;
+									gl_valdump[0] *= gain_res_xy[gain][res];
+									gl_valdump[1] *= gain_res_xy[gain][res];
+									gl_valdump[2] *= gain_res_z[gain][res];
+								}
 								new_pkt = 1;
 							}
 							else
@@ -364,7 +395,7 @@ int main(int argc, char* args[])
 						}
 						if (keyval == SDLK_f)
 						{
-							res++;
+							res--;
 							res &= 3;
 							printf("res=%d\r\n", res);
 							uint16_t resw = (res << 5) | (res << 7) | (res << 9);

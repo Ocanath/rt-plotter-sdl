@@ -7,7 +7,7 @@
 cmd_options_t gl_options = {
 	0,	//spread lines
 	230400,	//baud rate
-	0.1,	//yscale,
+	1.0,	//yscale,
 	1,	//print values to console
 	0, //print values to console ONLY (no actual plotting!)
 	0, //print in parser flag active
@@ -19,7 +19,8 @@ cmd_options_t gl_options = {
 	1,	//write loopback data for basic testing
 	0,	//offaxis-encoder
 	0,	//fsr-sensor
-	0	//temp-sensor
+	0,	//temp-sensor
+	1	//mlx-sensor
 };
 
 std::string gl_csvheader;
@@ -155,6 +156,11 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 			if (strcmp("--tempsensor", argv[i]) == 0)
 			{
 				popts->temp_sensor = 1;
+				snprintf(printstr, sizeof(printstr), "\r\n");
+			}
+			if (strcmp("--mlx90393", argv[i]) == 0)
+			{
+				popts->mlx_sensor = 1;
 				snprintf(printstr, sizeof(printstr), "\r\n");
 			}
 			if (strcmp("--help", argv[i]) == 0)

@@ -20,6 +20,7 @@ typedef struct cmd_options_t
 	uint8_t offaxis_encoder;
 	uint8_t fsr_sensor;
 	uint8_t temp_sensor;
+	uint8_t mlx_sensor;
 }cmd_options_t;
 
 extern cmd_options_t gl_options;
