@@ -14,6 +14,7 @@
 #include <algorithm>
 #include "fsrs.h"
 #include "ppp-parsing.h"
+#include "magsensor.h"
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 1200;
@@ -29,10 +30,26 @@ int main(int argc, char* args[])
 {
 	parse_args(argc, args, &gl_options);
 	autoconnect_serial();
+
+	mlx_write(0x77, MT_RESET);
+	SDL_Delay(100);
+	mlx_write(0x77, MT_EXIT_MODE);
+	SDL_Delay(100);
+	mlx_write(0x77, MT_RESET);
+	SDL_Delay(100);
+
+
+	//mlx_write_register(0x77, 0x2, 0b11111100000);	//set res. works
+	uint8_t res = 0;
+
+	uint8_t gain = 0 & 0x7;
+	mlx_write_register(0x77, 0x0, (gain << 4));
+
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
 
 	SDL_Color bgColor = { 10, 10, 10, 255 };
+
 
 	//Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -83,6 +100,11 @@ int main(int argc, char* args[])
 			int number_of_frames_buffered = 0;
 			uint64_t new_pkt_received_ts = 0;
 			uint8_t timeout_occurred = 0;
+
+
+			uint8_t write_override = 0;
+			
+
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -96,10 +118,9 @@ int main(int argc, char* args[])
 				uint8_t new_pkt = 0;
 				if (gl_options.write_dummy_loopback)
 				{
-					write_dummy_loopback(SDL_GetTicks64());
+					write_dummy_loopback(SDL_GetTicks64(), &write_override);
 				}
 
-				
 				pld_size = 0;
 				int num_bytes_read = read_serial(gl_ser_readbuf, sizeof(gl_ser_readbuf));				
 				for (int i = 0; i < (int)num_bytes_read; i++)
@@ -108,7 +129,7 @@ int main(int argc, char* args[])
 					pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
 					if (pld_size > 0)
 					{
-
+						write_override = 1;
 						if (gl_options.offaxis_encoder)
 						{
 							parse_PPP_offaxis_encoder(gl_ppp_payload_buffer, pld_size, gl_valdump, &wordsize, SDL_GetTicks64());
@@ -313,14 +334,45 @@ int main(int argc, char* args[])
 						int keyval = (int)e.key.keysym.sym;
 						if (keyval == SDLK_UP)
 						{
-							gl_selected_channel = (gl_selected_channel + 1) % NUM_FSR_PER_FINGER;
+							//gl_selected_channel = (gl_selected_channel + 1) % NUM_FSR_PER_FINGER;
+							gain++;
+							gain &= 7;
+							printf("gain = %d\r\n", gain);
+							mlx_write_register(0x77, 0x0, (gain << 4));
+							SDL_Delay(50);
 						}
 						if (keyval == SDLK_DOWN)
 						{
-							gl_selected_channel = (gl_selected_channel - 1) % NUM_FSR_PER_FINGER;
-							if (gl_selected_channel < 0)
-								gl_selected_channel = NUM_FSR_PER_FINGER + gl_selected_channel;
+							//gl_selected_channel = (gl_selected_channel - 1) % NUM_FSR_PER_FINGER;
+							//if (gl_selected_channel < 0)
+							//	gl_selected_channel = NUM_FSR_PER_FINGER + gl_selected_channel;
+							gain--;
+							gain &= 7;
+							printf("gain = %d\r\n", gain);
+							mlx_write_register(0x77, 0x0, (gain << 4));
+							SDL_Delay(50);
+
 						}
+						if (keyval == SDLK_r)
+						{
+							res++;
+							res &= 3;
+							printf("res=%d\r\n", res);
+							uint16_t resw = (res << 5) | (res << 7) | (res << 9);
+							mlx_write_register(0x77, 0x2, resw);	//set res. works
+							SDL_Delay(50);
+						}
+						if (keyval == SDLK_f)
+						{
+							res++;
+							res &= 3;
+							printf("res=%d\r\n", res);
+							uint16_t resw = (res << 5) | (res << 7) | (res << 9);
+							mlx_write_register(0x77, 0x2, resw);	//set res. works
+							SDL_Delay(50);
+
+						}
+
 					}
 
 				}

@@ -1,2 +1,5 @@
 rt-plotter-sdl.dir/Debug/
 rt-plotter-sdl.dir/Release/
+CMakeFiles/
+CMakeCache.txt
+Debug/

@@ -8,6 +8,7 @@
 #endif
 
 #include "PPP.h"
+#include "magsensor.h"
 
 int gl_ppp_bidx = 0;
 uint8_t gl_ppp_payload_buffer[PAYLOAD_SIZE] = { 0 };	//buffer
@@ -17,23 +18,25 @@ float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
 
 
 uint64_t dummy_loopback_txts = 0;
-void write_dummy_loopback(uint64_t tick)
+void write_dummy_loopback(uint64_t tick, uint8_t * override)
 {
-	if (tick - dummy_loopback_txts > 5)
+	if (tick - dummy_loopback_txts > 500 || *override != 0)
 	{
+		*override = 0;
 		dummy_loopback_txts = tick;
-		double time = (double)tick / 1000.f;
-		double s1 = sin(time);
-		double c1 = cos(time);
+		//double time = (double)tick / 1000.f;
+		//double s1 = sin(time);
+		//double c1 = cos(time);
 
-		int32_t vals[3] = { 0 };
-		uint8_t stuff_buf[sizeof(vals) * 2 + 2] = { 0 };
-		int idx = 0;
-		vals[idx++] = (int32_t)(s1 * 4096.);
-		vals[idx++] = (int32_t)(c1 * 4096.);
-		vals[idx++] = tick;
-		int num_bytes = PPP_stuff((uint8_t*)vals, sizeof(int32_t) * idx, stuff_buf, sizeof(stuff_buf));
-		serial_write(stuff_buf, num_bytes);
+		//int32_t vals[3] = { 0 };
+		//uint8_t stuff_buf[sizeof(vals) * 2 + 2] = { 0 };
+		//int idx = 0;
+		//vals[idx++] = (int32_t)(s1 * 4096.);
+		//vals[idx++] = (int32_t)(c1 * 4096.);
+		//vals[idx++] = tick;
+		//int num_bytes = PPP_stuff((uint8_t*)vals, sizeof(int32_t) * idx, stuff_buf, sizeof(stuff_buf));
+		//serial_write(stuff_buf, num_bytes);
+		mlx_write(MAGSENSOR_RS485ADDRESS, MT_READ_XYZ);
 	}
 }
 

@@ -6,17 +6,17 @@
 
 cmd_options_t gl_options = {
 	0,	//spread lines
-	460800,	//baud rate
-	1,	//yscale,
-	0,	//print values to console
+	230400,	//baud rate
+	0.1,	//yscale,
+	1,	//print values to console
 	0, //print values to console ONLY (no actual plotting!)
 	0, //print in parser flag active
 	0,	//xy mode
 	0,	//csv header
 	1.f, //console scaler
-	1,	//integer modulo for plotting printing
-	3,	//number of widths
-	0,	//write loopback data for basic testing
+	5,	//integer modulo for plotting printing
+	1,	//number of widths
+	1,	//write loopback data for basic testing
 	0,	//offaxis-encoder
 	0,	//fsr-sensor
 	0	//temp-sensor

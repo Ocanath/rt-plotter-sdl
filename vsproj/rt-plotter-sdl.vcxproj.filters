@@ -19,6 +19,9 @@
     <ClCompile Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\ppp-parsing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\magsensor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\winserial.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -42,6 +45,9 @@
     <ClInclude Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\u32_fmt_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\magsensor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="C:\Users\ocanath\OcanathProj\rt-plotter-sdl\winserial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -51,10 +57,10 @@
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{BA4E2550-DC9B-3E8E-B93C-5856EB7E7FCB}</UniqueIdentifier>
+      <UniqueIdentifier>{63F767FA-AC0A-3CE6-9B83-FE762C7BA04D}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{AFBF823B-4FB3-3FFB-8640-FE2E9A20A07E}</UniqueIdentifier>
+      <UniqueIdentifier>{AC364067-107E-3722-9609-8852A16DB2A8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
