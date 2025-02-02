@@ -20,7 +20,7 @@ float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
 uint64_t dummy_loopback_txts = 0;
 void write_dummy_loopback(uint64_t tick, uint8_t * override)
 {
-	if (tick - dummy_loopback_txts > 500 || *override != 0)
+	if (tick - dummy_loopback_txts > 15)// || *override != 0)
 	{
 		*override = 0;
 		dummy_loopback_txts = tick;
