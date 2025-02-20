@@ -26,9 +26,10 @@ void parse_PPP_offaxis_encoder(uint8_t * input_buf, int payload_size, float * pa
 		float rawtemp = pData->i16[6];
 		float mV = ((rawtemp * 3.3f) / 4096.f) * 1000.f;
 		float Temp = (5.f / 44.f) * ((5.f * sqrt(9111265.f - 1760.f * mV)) - 13501.f);
-		parsed_data[0] = Temp;
-		parsed_data[1] = ((float)ms_tick) / 1000.f;
-		*parsed_data_size = 2;
+		parsed_data[0] = (float)pData->i16[0];
+		parsed_data[1] = Temp;
+		parsed_data[2] = ((float)ms_tick) / 1000.f;
+		*parsed_data_size = 3;
 		//printf("Temperature C = %f, Time = %f\n", parsed_data[0], parsed_data[1]);
 	}
 }
