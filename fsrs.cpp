@@ -14,7 +14,17 @@ typedef union
 }packed_sensor_data_t;
 packed_sensor_data_t gl_tx_buf = { 0 };
 
-
+/*
+Generic hex checksum calculation.
+TODO: use this in the psyonic API
+*/
+uint16_t get_checksum16(uint16_t* arr, int size)
+{
+	int16_t checksum = 0;
+	for (int i = 0; i < size; i++)
+		checksum += (int16_t)arr[i];
+	return -checksum;
+}
 
 uint32_t parsecouter = 0;
 const uint32_t num_samples_to_skip_plotting = 100;
@@ -26,10 +36,16 @@ void parse_PPP_offaxis_encoder(uint8_t * input_buf, int payload_size, float * pa
 		float rawtemp = pData->i16[6];
 		float mV = ((rawtemp * 3.3f) / 4096.f) * 1000.f;
 		float Temp = (5.f / 44.f) * ((5.f * sqrt(9111265.f - 1760.f * mV)) - 13501.f);
-		parsed_data[0] = (float)pData->i16[0];
-		parsed_data[1] = Temp;
-		parsed_data[2] = ((float)ms_tick) / 1000.f;
-		*parsed_data_size = 3;
+		
+		uint16_t checksum = get_checksum16( (uint16_t*)pData->i16,  payload_size/sizeof(int16_t) - 1);
+		if((uint16_t)pData->i16[payload_size/sizeof(int16_t)-1] == checksum)
+		{
+			parsed_data[0] = (float)pData->i16[0];
+			parsed_data[1] = Temp;
+			parsed_data[2] = ((float)ms_tick) / 1000.f;
+			*parsed_data_size = 3;
+		}
+		//else, fall through and do nothing
 		//printf("Temperature C = %f, Time = %f\n", parsed_data[0], parsed_data[1]);
 	}
 }
