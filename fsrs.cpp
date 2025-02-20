@@ -44,7 +44,6 @@ void parse_PPP_offaxis_encoder(uint8_t * input_buf, int payload_size, float * pa
 			parsed_data[1] = Temp;
 			parsed_data[2] = ((float)ms_tick) / 1000.f;
 			*parsed_data_size = 3;
-			printf("MATCH\r\n");
 		}
 		//else, fall through and do nothing
 		//printf("Temperature C = %f, Time = %f\n", parsed_data[0], parsed_data[1]);
