@@ -100,8 +100,8 @@ int main(int argc, char* args[])
 	client.si_other.sin_family = AF_INET;
 	//client.si_other.sin_addr.S_un.S_addr = inet_addr("192.168.123.255");
 	//TODO: auto address discovery with WHO_GOES_THERE
-	inet_pton(AF_INET, "192.168.123.86", &client.si_other.sin_addr);
-	//sendto(client.s, (const char*)"SPAM_ME", 7, 0, (struct sockaddr*)&client.si_other, client.slen);
+	inet_pton(AF_INET, "192.168.33.2", &client.si_other.sin_addr);
+	sendto(client.s, (const char*)"SPAM_ME", 7, 0, (struct sockaddr*)&client.si_other, client.slen);
 	bind(client.s, (struct sockaddr*)&server, sizeof(server));
 
 	//The window we'll be rendering to
@@ -138,7 +138,7 @@ int main(int argc, char* args[])
 			int32_t accum_mouse_y = 0;
 			double forward = 0;
 			const double slow_speedcap = 200;
-			const double fast_speedcap = 1000;
+			const double fast_speedcap = 3000;
 			double velocity_threshold = slow_speedcap;
 
 			SDL_WarpMouseInWindow(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
@@ -162,6 +162,7 @@ int main(int argc, char* args[])
 			int zerocount = 0;
 			uint64_t mouse_activity_ts = 0;
 			uint64_t print_ts = 0;
+			uint64_t udp_tx_ts = 0;
 			int32_t deltax_lastvalid = 0;
 			uint8_t throttle = 0;
 			uint8_t prev_throttle = 0;
@@ -225,9 +226,9 @@ int main(int argc, char* args[])
 				accum_mouse_y = symm_thresh(accum_mouse_y, PI_14B / 2);
 				
 
-				double rate_scale = 0.75;
-				double turbo_accel = 0.6;
-				double decel_factor = 3.0;
+				double rate_scale = 3.0;
+				double turbo_accel = 2.0;
+				double decel_factor = 5.0;
 
 				double dt = (double)delta*.001;
 				if (throttle)
@@ -239,7 +240,6 @@ int main(int argc, char* args[])
 				}
 				else
 				{
-					rate_scale = turbo_accel + 0.1;
 					velocity_threshold -= dt * turbo_accel;
 					if (velocity_threshold < slow_speedcap)
 						velocity_threshold = slow_speedcap;
@@ -307,30 +307,30 @@ int main(int argc, char* args[])
 
 				SDL_WarpMouseInWindow(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
-				uint8_t pld[32] = { 0 };
-				uint16_t* pu16 = (uint16_t*)(&pld[0]);
-				int i = 0;
-				pld[i++] = POSITION;
-				pld[i++] = 0;
-				
-				int32_t* p_cmd32 = (int32_t *)(& pld[i]);
-				p_cmd32[0] = w1;
-				i += sizeof(int32_t);
-				p_cmd32[1] = w2;
-				i += sizeof(int32_t);
-				p_cmd32[2] = gy;
-				i += sizeof(int32_t);
 
-				int chkidx = (i + (i % 2)) / 2;	//pad a +1 byte if it's odd, divide by 2, set that as the start of our 16bit checksum
-				pu16[chkidx] = fletchers_checksum16(pu16, chkidx);
-				chkidx++;
-				int pld_size = chkidx * sizeof(uint16_t);
-				int stuffed_size = PPP_stuff(pld, pld_size, gl_ppp_stuffing_buffer, sizeof(gl_ppp_stuffing_buffer));
-				for(int i = 0; i < 3; i++)
+				if (tick - udp_tx_ts > 10)
+				{
+					uint8_t pld[32] = { 0 };
+					uint16_t* pu16 = (uint16_t*)(&pld[0]);
+					int i = 0;
+					pld[i++] = POSITION;
+					pld[i++] = 0;
+
+					int32_t* p_cmd32 = (int32_t*)(&pld[i]);
+					p_cmd32[0] = w1;
+					i += sizeof(int32_t);
+					p_cmd32[1] = w2;
+					i += sizeof(int32_t);
+					p_cmd32[2] = gy;
+					i += sizeof(int32_t);
+
+					int chkidx = (i + (i % 2)) / 2;	//pad a +1 byte if it's odd, divide by 2, set that as the start of our 16bit checksum
+					pu16[chkidx] = fletchers_checksum16(pu16, chkidx);
+					chkidx++;
+					int pld_size = chkidx * sizeof(uint16_t);
+					int stuffed_size = PPP_stuff(pld, pld_size, gl_ppp_stuffing_buffer, sizeof(gl_ppp_stuffing_buffer));
 					sendto(client.s, (const char*)gl_ppp_stuffing_buffer, stuffed_size, 0, (struct sockaddr*)&client.si_other, client.slen);
-
-
-
+				}
 			}
 		}
 	}
