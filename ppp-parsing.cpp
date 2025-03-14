@@ -17,26 +17,37 @@ uint8_t gl_ser_readbuf[PAYLOAD_SIZE] = { 0 };
 float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
 
 
+int32_t get_vq_duty_from_float(float input)
+{
+	int32_t val = (int32_t)(input * 3546.f);
+	if (val < -3546)
+		val = -3546;
+	if (val > 3546)
+		val = 3546;	//sqrt(3)/2 * 4096, fixed point representation of vq duty for inverse park and inverse clarke (svm)
+	return val;
+}
+
+
+
 uint64_t dummy_loopback_txts = 0;
 void write_dummy_loopback(uint64_t tick, uint8_t * override)
 {
 	if (tick - dummy_loopback_txts > 15)// || *override != 0)
 	{
-		*override = 0;
-		dummy_loopback_txts = tick;
-		//double time = (double)tick / 1000.f;
-		//double s1 = sin(time);
-		//double c1 = cos(time);
+		///////////////////
+		float time = ((float)tick)/1000.f;
+		float duty = sin(time*.6);
 
-		//int32_t vals[3] = { 0 };
-		//uint8_t stuff_buf[sizeof(vals) * 2 + 2] = { 0 };
-		//int idx = 0;
-		//vals[idx++] = (int32_t)(s1 * 4096.);
-		//vals[idx++] = (int32_t)(c1 * 4096.);
-		//vals[idx++] = tick;
-		//int num_bytes = PPP_stuff((uint8_t*)vals, sizeof(int32_t) * idx, stuff_buf, sizeof(stuff_buf));
-		//serial_write(stuff_buf, num_bytes);
-		mlx_write(MAGSENSOR_RS485ADDRESS, MT_READ_XYZ);
+
+
+
+
+		/////////////////////leave alone
+		int32_t vq_write = get_vq_duty_from_float(duty);
+		uint8_t stuff_buf[sizeof(vq_write) * 2 + 2] = {};
+		dummy_loopback_txts = tick;
+		int num_bytes = PPP_stuff((uint8_t*)(&vq_write), sizeof(int32_t), stuff_buf, sizeof(stuff_buf));
+		serial_write(stuff_buf, num_bytes);
 	}
 }
 

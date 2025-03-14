@@ -65,15 +65,17 @@ int main(int argc, char* args[])
 
 
 	//mlx_write_register(0x77, 0x2, 0b11111100000);	//set res. works
-	uint8_t res = 0;
+	uint8_t res = 3;
 	uint8_t gain = 7 & 0x7;
 
 	mlx_write_register(0x77, 0x0, (gain << 4));
 	SDL_Delay(100);
 	printf("Write Gain Complete\r\n");
 
-	uint16_t resw = (res << 5) | (res << 7) | (res << 9);
-	mlx_write_register(0x77, 0x2, resw);	//set res. works
+	uint16_t regw = (res << 5) | (res << 7) | (res << 9);
+	uint8_t dig_filt = 2;	//datashit says that dig_filt = 0 and OSR=0, chip won't work right so have to select non-default settings!?!?!?!!?!?!?!?!?
+	regw |= (dig_filt & 0b111) << 2;
+	mlx_write_register(0x77, 0x2, regw);	//set res. works
 	SDL_Delay(100);
 	printf("Write Res Complete\r\n");
 
@@ -151,6 +153,8 @@ int main(int argc, char* args[])
 				if (gl_options.write_dummy_loopback)
 				{
 					write_dummy_loopback(SDL_GetTicks64(), &write_override);
+					uint64_t write_delay_tick = SDL_GetTicks64();
+					while (SDL_GetTicks64() - write_delay_tick < 5);	//delay
 				}
 
 				pld_size = 0;
@@ -409,6 +413,16 @@ int main(int argc, char* args[])
 							mlx_write_register(0x77, 0x2, resw);	//set res. works
 							SDL_Delay(50);
 
+						}
+						if (keyval == SDLK_c)
+						{
+							mlx_write(0x77, MT_DISABLE_SUBTRACTION);
+							printf("Disabling Subtraction\r\n");
+						}
+						if (keyval == SDLK_v)
+						{
+							mlx_write(0x77, MT_ENABLE_SUBTRACTION);
+							printf("Enabling Subtraction\r\n");
 						}
 
 					}
