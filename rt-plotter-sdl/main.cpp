@@ -91,16 +91,16 @@ int main(int argc, char* args[])
 {
 	parse_args(argc, args, &gl_options);
 
-	WinUdpClient client(6701);
+	WinUdpClient client(6702);
 	struct sockaddr_in server;
 	server.sin_family = AF_INET;
 	server.sin_addr = in4addr_any;
-	server.sin_port = htons(6701);
+	server.sin_port = htons(6702);
 	client.set_nonblocking();
 	client.si_other.sin_family = AF_INET;
 	//client.si_other.sin_addr.S_un.S_addr = inet_addr("192.168.123.255");
 	//TODO: auto address discovery with WHO_GOES_THERE
-	inet_pton(AF_INET, "192.168.33.2", &client.si_other.sin_addr);
+	inet_pton(AF_INET, "192.168.137.145", &client.si_other.sin_addr);
 	sendto(client.s, (const char*)"SPAM_ME", 7, 0, (struct sockaddr*)&client.si_other, client.slen);
 	bind(client.s, (struct sockaddr*)&server, sizeof(server));
 
@@ -183,30 +183,6 @@ int main(int argc, char* args[])
 				{
 					if (e.type == SDL_QUIT)
 						quit = true;
-					else if (e.type == SDL_KEYDOWN)
-					{
-						int idx = (int)e.key.keysym.sym;
-						if (idx >= 0 && idx <= sizeof(keys) / sizeof(bool))
-						{
-							keys[idx] = true;
-						}
-						if (e.key.keysym.scancode == SDL_SCANCODE_LSHIFT)
-						{
-							throttle = 1;
-						}
-					}
-					else if (e.type == SDL_KEYUP)
-					{
-						int idx = (int)e.key.keysym.sym;
-						if (idx >= 0 && idx <= sizeof(keys) / sizeof(bool))
-						{
-							keys[idx] = false;
-						}
-						if (e.key.keysym.scancode == SDL_SCANCODE_LSHIFT)
-						{
-							throttle = 0;
-						}
-					}
 					else if (e.type == SDL_MOUSEMOTION)
 					{
 						mouse_motion = 1;
@@ -223,93 +199,25 @@ int main(int argc, char* args[])
 
 				accum_mouse_x = ( (accum_mouse_x + deltax) );
 				accum_mouse_y = ( ( accum_mouse_y + deltay) );
-				accum_mouse_y = symm_thresh(accum_mouse_y, PI_14B / 2);
-				
-
-				double rate_scale = 3.0;
-				double turbo_accel = 2.0;
-				double decel_factor = 5.0;
-
-				double dt = (double)delta*.001;
-				if (throttle)
-				{
-					rate_scale = turbo_accel + 0.1;
-					velocity_threshold += dt* turbo_accel;
-					if (velocity_threshold > fast_speedcap)
-						velocity_threshold = fast_speedcap;
-				}
-				else
-				{
-					velocity_threshold -= dt * turbo_accel;
-					if (velocity_threshold < slow_speedcap)
-						velocity_threshold = slow_speedcap;
-				}
-				if (keys[SDLK_w])
-				{
-					forward += dt * rate_scale;
-					if (forward > velocity_threshold)
-						forward = velocity_threshold;
-				}
-				if (keys[SDLK_s])
-				{
-					forward -= dt * rate_scale;
-					if (forward < -velocity_threshold)
-						forward = -velocity_threshold;
-				}
-				if (keys[SDLK_w] == false && keys[SDLK_s] == false)
-				{
-					if (forward > 0)
-					{
-						forward -= dt * decel_factor;
-						if (forward < 0)
-							forward = 0;
-					}
-					else
-					{
-						forward += dt * decel_factor;
-						if (forward > 0)
-							forward = 0;
-					}
-				}
-				if (keys[SDLK_w] == true && w_pressed_prev == false)
-				{
-					w_ts = tick;
-				}
-				else if (keys[SDLK_w] == false && w_pressed_prev == true)
-				{
-					w_stop_ts = tick;
-				}
-				if (keys[SDLK_s] == true && s_pressed_prev == false)
-				{
-					s_ts = tick;
-				}
-				else if (keys[SDLK_s] == false && s_pressed_prev == true)
-				{
-					s_stop_ts = tick;
-				}
-				w_pressed_prev = keys[SDLK_w];
-				s_pressed_prev = keys[SDLK_s];
 				
 				if (mouse_motion != 0 || (tick - mouse_activity_ts) > 10)
 				{
 					deltax_lastvalid = deltax;
 				}
 
-				int32_t w1 = (-deltax_lastvalid + (int32_t)forward);
-				int32_t w2 = (-deltax_lastvalid - (int32_t)forward);
-				int32_t gy = wrap_2pi_14b(accum_mouse_y);
-				
 				if ( (tick - print_ts) > 50)
 				{
-					printf("%f, %f, %f\n", (float)w1, (float)w2, (float)gy * (180.f / (float)PI_14B));
+					printf("%f, %f\n", (float)accum_mouse_x, (float)accum_mouse_y);
 					print_ts = tick;
 				}
 
 				SDL_WarpMouseInWindow(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
 
-				if (tick - udp_tx_ts > 10)
+				if (tick - udp_tx_ts > 20)
 				{
+					udp_tx_ts = tick;
+
 					uint8_t pld[32] = { 0 };
 					uint16_t* pu16 = (uint16_t*)(&pld[0]);
 					int i = 0;
@@ -317,11 +225,9 @@ int main(int argc, char* args[])
 					pld[i++] = 0;
 
 					int32_t* p_cmd32 = (int32_t*)(&pld[i]);
-					p_cmd32[0] = w1;
+					p_cmd32[0] = accum_mouse_x;
 					i += sizeof(int32_t);
-					p_cmd32[1] = w2;
-					i += sizeof(int32_t);
-					p_cmd32[2] = gy;
+					p_cmd32[1] = accum_mouse_y;
 					i += sizeof(int32_t);
 
 					int chkidx = (i + (i % 2)) / 2;	//pad a +1 byte if it's odd, divide by 2, set that as the start of our 16bit checksum
