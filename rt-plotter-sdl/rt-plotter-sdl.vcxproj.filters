@@ -33,6 +33,12 @@
     <ClCompile Include="trig_fixed.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sauron-eye-closedform-ik.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ppp-parsing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="winserial.h">
@@ -54,6 +60,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WinUdpClient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sauron-eye-closedform-ik.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ppp-parsing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

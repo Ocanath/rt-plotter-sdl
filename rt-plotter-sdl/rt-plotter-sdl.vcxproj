@@ -149,12 +149,16 @@
     <ClCompile Include="colors.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PPP.cpp" />
+    <ClCompile Include="ppp-parsing.cpp" />
+    <ClCompile Include="sauron-eye-closedform-ik.cpp" />
     <ClCompile Include="trig_fixed.cpp" />
     <ClCompile Include="winserial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="args-parsing.h" />
     <ClInclude Include="colors.h" />
+    <ClInclude Include="ppp-parsing.h" />
+    <ClInclude Include="sauron-eye-closedform-ik.h" />
     <ClInclude Include="trig_fixed.h" />
     <ClInclude Include="u32_fmt_t.h" />
     <ClInclude Include="PPP.h" />

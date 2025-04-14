@@ -16,7 +16,8 @@ and may not be redistributed without written permission.*/
 #include "args-parsing.h"
 #include <algorithm>
 #include "trig_fixed.h"
-
+#include "sauron-eye-closedform-ik.h"
+#include "ppp-parsing.h"
 
 #pragma comment(lib,"ws2_32.lib") //Winsock Library
 
@@ -44,37 +45,6 @@ static uint8_t gl_ser_readbuf[512] = { 0 };
 static float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
 
 
-/*
-Generic hex checksum calculation.
-TODO: use this in the psyonic API
-*/
-uint32_t fletchers_checksum32(uint32_t* arr, int size)
-{
-	int32_t checksum = 0;
-	int32_t fchk = 0;
-	for (int i = 0; i < size; i++)
-	{
-		checksum += (int32_t)arr[i];
-		fchk += checksum;
-	}
-	return fchk;
-}
-
-/*
-Generic hex checksum calculation.
-TODO: use this in the psyonic API
-*/
-uint16_t fletchers_checksum16(uint16_t* arr, int size)
-{
-	int16_t checksum = 0;
-	int16_t fchk = 0;
-	for (int i = 0; i < size; i++)
-	{
-		checksum += (int16_t)arr[i];
-		fchk += checksum;
-	}
-	return fchk;
-}
 
 
 /*Value clamping symmetric about zero*/
@@ -90,6 +60,7 @@ int32_t symm_thresh(int32_t sig, int32_t thresh)
 int main(int argc, char* args[])
 {
 	parse_args(argc, args, &gl_options);
+	autoconnect_serial();//grab a serial port
 
 	WinUdpClient client(6702);
 	struct sockaddr_in server;
@@ -103,6 +74,8 @@ int main(int argc, char* args[])
 	inet_pton(AF_INET, "192.168.137.145", &client.si_other.sin_addr);
 	sendto(client.s, (const char*)"SPAM_ME", 7, 0, (struct sockaddr*)&client.si_other, client.slen);
 	bind(client.s, (struct sockaddr*)&server, sizeof(server));
+
+
 
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
@@ -140,6 +113,8 @@ int main(int argc, char* args[])
 			const double slow_speedcap = 200;
 			const double fast_speedcap = 3000;
 			double velocity_threshold = slow_speedcap;
+			double th1 = 0;
+			double th2 = 0;
 
 			SDL_WarpMouseInWindow(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
@@ -192,8 +167,8 @@ int main(int argc, char* args[])
 
 				int mouse_x, mouse_y;
 				SDL_GetMouseState(&mouse_x, &mouse_y);
-				int32_t gain_x = 5;
-				int32_t gain_y = 20;
+				int32_t gain_x = 1;
+				int32_t gain_y = -1;
 				int32_t deltax = (mouse_x - prev_mouse_x)* gain_x;
 				int32_t deltay = (mouse_y - prev_mouse_y) * gain_y;
 
@@ -205,16 +180,23 @@ int main(int argc, char* args[])
 					deltax_lastvalid = deltax;
 				}
 
+				double vx = (double)accum_mouse_x / 1000.;
+				double vy = (double)accum_mouse_y / 1000.;
+
+				get_ik_angles_double(vx, vy, 100, &th1, &th2);
+				int32_t th1_i32 = (int32_t)(th1 * (float)PI_14B);
+				int32_t th2_i32 = (int32_t)(th2 * (float)PI_14B);
+
 				if ( (tick - print_ts) > 50)
 				{
-					printf("%f, %f\n", (float)accum_mouse_x, (float)accum_mouse_y);
+					printf("%f, %f, %d, %d\n", vx, vy, th1_i32, th2_i32);
 					print_ts = tick;
 				}
 
 				SDL_WarpMouseInWindow(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
 
-				if (tick - udp_tx_ts > 20)
+				if (tick - udp_tx_ts > 10)
 				{
 					udp_tx_ts = tick;
 
@@ -225,9 +207,9 @@ int main(int argc, char* args[])
 					pld[i++] = 0;
 
 					int32_t* p_cmd32 = (int32_t*)(&pld[i]);
-					p_cmd32[0] = accum_mouse_x;
+					p_cmd32[0] = th1_i32;
 					i += sizeof(int32_t);
-					p_cmd32[1] = accum_mouse_y;
+					p_cmd32[1] = th2_i32;
 					i += sizeof(int32_t);
 
 					int chkidx = (i + (i % 2)) / 2;	//pad a +1 byte if it's odd, divide by 2, set that as the start of our 16bit checksum
@@ -235,7 +217,8 @@ int main(int argc, char* args[])
 					chkidx++;
 					int pld_size = chkidx * sizeof(uint16_t);
 					int stuffed_size = PPP_stuff(pld, pld_size, gl_ppp_stuffing_buffer, sizeof(gl_ppp_stuffing_buffer));
-					sendto(client.s, (const char*)gl_ppp_stuffing_buffer, stuffed_size, 0, (struct sockaddr*)&client.si_other, client.slen);
+					//sendto(client.s, (const char*)gl_ppp_stuffing_buffer, stuffed_size, 0, (struct sockaddr*)&client.si_other, client.slen);
+					serial_write(gl_ppp_stuffing_buffer, stuffed_size);
 				}
 			}
 		}
