@@ -188,12 +188,12 @@ int main(int argc, char* args[])
 
 				double vx = kbvx;
 				double vy = kbvy;
-				if (bts == 1)
+				if (bts == 1)	//left mouse button
 				{
 					vx = targx;
 					vy = targy;
 				}
-				if (bts == 2)
+				if (bts == 2)	//center mouse button
 				{
 					targx = vx;
 					targy = vy;
