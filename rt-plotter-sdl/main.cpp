@@ -142,6 +142,8 @@ int main(int argc, char* args[])
 			uint8_t throttle = 0;
 			uint8_t prev_throttle = 0;
 			uint64_t throttle_stop_ts = 0;
+			double targx = 0;
+			double targy = 0;
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -153,7 +155,6 @@ int main(int argc, char* args[])
 				float t = ((float)tick) * 0.001f;
 
 				uint8_t mouse_motion = 0;
-				
 				SDL_PollEvent(&e);
 				{
 					if (e.type == SDL_QUIT)
@@ -166,7 +167,7 @@ int main(int argc, char* args[])
 				}
 
 				int mouse_x, mouse_y;
-				SDL_GetMouseState(&mouse_x, &mouse_y);
+				uint32_t bts = SDL_GetMouseState(&mouse_x, &mouse_y);
 				int32_t gain_x = 1;
 				int32_t gain_y = -1;
 				int32_t deltax = (mouse_x - prev_mouse_x)* gain_x;
@@ -180,16 +181,69 @@ int main(int argc, char* args[])
 					deltax_lastvalid = deltax;
 				}
 
-				double vx = (double)accum_mouse_x / 1000.;
-				double vy = (double)accum_mouse_y / 1000.;
 
-				get_ik_angles_double(vx, vy, 100, &th1, &th2);
+
+				double kbvx = (double)accum_mouse_x / 1000.;
+				double kbvy = (double)accum_mouse_y / 1000.;
+
+				double vx = kbvx;
+				double vy = kbvy;
+				if (bts == 1)
+				{
+					vx = targx;
+					vy = targy;
+				}
+				if (bts == 2)
+				{
+					targx = vx;
+					targy = vy;
+				}
+
+				//double tsec = double(tick) / 1000;
+				//double vx = sin(tsec)*0.5;
+				//double vy = cos(tsec)*0.5;
+
+				//double vx = 0;
+				//double vy = 0;
+				//uint32_t tmod = tick % 4000;
+				//
+				//if (tmod >= 0 && tmod < 1000)
+				//{
+				//	double tmodsec = (double)(tmod - 0) / 1000.;
+				//	vx = tmodsec*10;
+				//	vy = 0;
+				//}
+				//else if (tmod >= 1000 && tmod < 2000)
+				//{
+				//	double tmodsec = (double)(tmod - 1000) / 1000.;
+				//	vx = 10;
+				//	vy = tmodsec * 10;
+				//}
+				//else if (tmod >= 2000 && tmod < 3000)
+				//{
+				//	double tmodsec = (double)(tmod - 2000) / 1000.;
+				//	vx = 10 - tmodsec * 10;
+				//	vy = 10;
+				//}
+				//else if (tmod >= 3000 && tmod < 4000)
+				//{
+				//	double tmodsec = (double)(tmod - 3000) / 1000.;
+				//	vy = 10 - tmodsec * 10;
+				//	vx = 0;
+				//}
+				//vx = vx + kbvx;
+				//vy = vy + kbvy;
+
+				const double rotangle = M_PI / 4;
+				double vxr = vx * cos(rotangle) - vy * sin(rotangle);
+				double vyr = vx * sin(rotangle) + vy * cos(rotangle);
+				get_ik_angles_double(vxr, vyr, 10, &th1, &th2);
 				int32_t th1_i32 = (int32_t)(th1 * (float)PI_14B);
 				int32_t th2_i32 = (int32_t)(th2 * (float)PI_14B);
 
 				if ( (tick - print_ts) > 50)
 				{
-					printf("%f, %f, %d, %d\n", vx, vy, th1_i32, th2_i32);
+					printf("%f, %f, %d, %d, %d\n", vx, vy, th1_i32, th2_i32, bts);
 					print_ts = tick;
 				}
 
