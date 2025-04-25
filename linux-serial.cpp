@@ -73,7 +73,7 @@ int autoconnect_serial(void)
 
 int serial_write(uint8_t* data, int size)
 {
-	return 0;	//todo write wrapper 
+	return write(serial_port, data, size);
 }
 
 int read_serial(uint8_t * readbuf, int bufsize)
