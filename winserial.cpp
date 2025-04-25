@@ -59,11 +59,11 @@ int autoconnect_serial(void)
 int serial_write(uint8_t* data, int size)
 {
 	LPDWORD written = 0;
-	int wfrc = WriteFile(serialport, data, size, written, NULL);
+	int wfrc = WriteFile(&serialport, data, size, written, NULL);
 	return (int)written;
 }
 
-int read_serial(uint8_t* readbuf, int bufsize)
+int read_serial(uint8_t * readbuf, int bufsize)
 {
 	LPDWORD num_bytes_read = 0;
 	int rc = ReadFile(serialport, readbuf, bufsize, (LPDWORD)(&num_bytes_read), NULL);	//

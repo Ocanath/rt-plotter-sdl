@@ -1,7 +1,6 @@
 #include "ppp-parsing.h"
 #include <math.h>
 
-#define PLATFORM_WINDOWS
 #ifdef PLATFORM_WINDOWS
 #include "winserial.h"
 #elif defined(PLATFORM_LINUX)
@@ -37,7 +36,6 @@ void write_dummy_loopback(uint64_t tick)
 		serial_write(stuff_buf, num_bytes);
 	}
 }
-
 
 
 /*

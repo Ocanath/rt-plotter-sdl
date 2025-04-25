@@ -13,8 +13,13 @@ typedef struct cmd_options_t
 	uint8_t print_in_parser;
 	uint8_t xy_mode;	//option to enable xy mode. In this mode, the data stream is mapped as value pairs (0-1, 2-3, etc.) where 0 is x, 1 is y. 
 	uint8_t csv_header;
+	float parser_yscale;
+	int print_in_parser_every_n;
+	int num_widths;
+	uint8_t write_dummy_loopback;
 	uint8_t offaxis_encoder;
 	uint8_t fsr_sensor;
+	uint8_t temp_sensor;
 }cmd_options_t;
 
 extern cmd_options_t gl_options;
