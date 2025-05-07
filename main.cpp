@@ -147,14 +147,12 @@ int main(int argc, char* args[])
 								cycle_count_for_printing = (cycle_count_for_printing + 1) % gl_options.print_in_parser_every_n;
 								if (cycle_count_for_printing == 0)
 								{
-									for (int fvidx = 0; fvidx < wordsize; fvidx++)
+									for (int fvidx = 0; fvidx < wordsize-1; fvidx++)
 									{
 										float val = gl_valdump[fvidx] * gl_options.parser_yscale;
-										printf("%0.6f", val);
-										if (fvidx < (wordsize - 1))
-											printf(", ");
+										printf("%0.6f, ", val);
 									}
-									printf("\n");
+									printf("%0.6f\n", gl_valdump[wordsize - 1]);	//time is always in ms coming in, so no scaling with yscale here
 								}
 							}
 						}
