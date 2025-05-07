@@ -44,7 +44,7 @@ int autoconnect_serial(void)
 		int rc = connect_to_usb_serial(&serialport, namestr, gl_options.baud_rate);
 		if (rc != 0)
 		{
-			if (!(gl_options.csv_header == 1 && (gl_options.print_only == 1 || gl_options.print_in_parser == 1)))
+			if (!(gl_options.csv_header == 1 ))
 			{
 				printf("Connected to COM port %s successfully\n", namestr);
 			}
