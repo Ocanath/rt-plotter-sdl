@@ -100,7 +100,7 @@ int main(int argc, char* args[])
 	client.si_other.sin_family = AF_INET;
 	//client.si_other.sin_addr.S_un.S_addr = inet_addr("192.168.123.255");
 	//TODO: auto address discovery with WHO_GOES_THERE
-	inet_pton(AF_INET, "192.168.33.2", &client.si_other.sin_addr);
+	inet_pton(AF_INET, "192.168.137.122", &client.si_other.sin_addr);
 	sendto(client.s, (const char*)"SPAM_ME", 7, 0, (struct sockaddr*)&client.si_other, client.slen);
 	bind(client.s, (struct sockaddr*)&server, sizeof(server));
 
@@ -310,6 +310,8 @@ int main(int argc, char* args[])
 
 				if (tick - udp_tx_ts > 10)
 				{
+					udp_tx_ts = tick;
+
 					uint8_t pld[32] = { 0 };
 					uint16_t* pu16 = (uint16_t*)(&pld[0]);
 					int i = 0;
