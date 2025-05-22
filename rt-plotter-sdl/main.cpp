@@ -100,7 +100,7 @@ int main(int argc, char* args[])
 	client.si_other.sin_family = AF_INET;
 	//client.si_other.sin_addr.S_un.S_addr = inet_addr("192.168.123.255");
 	//TODO: auto address discovery with WHO_GOES_THERE
-	inet_pton(AF_INET, "192.168.137.122", &client.si_other.sin_addr);
+	inet_pton(AF_INET, "192.168.137.253", &client.si_other.sin_addr);
 	sendto(client.s, (const char*)"SPAM_ME", 7, 0, (struct sockaddr*)&client.si_other, client.slen);
 	bind(client.s, (struct sockaddr*)&server, sizeof(server));
 
@@ -167,6 +167,7 @@ int main(int argc, char* args[])
 			uint8_t throttle = 0;
 			uint8_t prev_throttle = 0;
 			uint64_t throttle_stop_ts = 0;
+			uint8_t brake = 0;
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -194,6 +195,10 @@ int main(int argc, char* args[])
 						{
 							throttle = 1;
 						}
+						if (e.key.keysym.scancode == SDL_SCANCODE_SPACE)
+						{
+							brake = 1;
+						}
 					}
 					else if (e.type == SDL_KEYUP)
 					{
@@ -205,6 +210,10 @@ int main(int argc, char* args[])
 						if (e.key.keysym.scancode == SDL_SCANCODE_LSHIFT)
 						{
 							throttle = 0;
+						}
+						if (e.key.keysym.scancode == SDL_SCANCODE_SPACE)
+						{
+							brake = 0;
 						}
 					}
 					else if (e.type == SDL_MOUSEMOTION)
@@ -226,14 +235,15 @@ int main(int argc, char* args[])
 				accum_mouse_y = symm_thresh(accum_mouse_y, PI_14B / 2);
 				
 
-				double rate_scale = 3.0;
-				double turbo_accel = 2.0;
-				double decel_factor = 5.0;
+				double rate_scale = 0.1;
+				double turbo_accel = 0.05;
+				double decel_factor = 0.1;
+				double brake_factor = 0.5;
 
 				double dt = (double)delta*.001;
 				if (throttle)
 				{
-					rate_scale = turbo_accel + 0.1;
+					rate_scale = turbo_accel;
 					velocity_threshold += dt* turbo_accel;
 					if (velocity_threshold > fast_speedcap)
 						velocity_threshold = fast_speedcap;
@@ -260,13 +270,28 @@ int main(int argc, char* args[])
 				{
 					if (forward > 0)
 					{
-						forward -= dt * decel_factor;
+ 						forward -= dt * decel_factor;
 						if (forward < 0)
 							forward = 0;
 					}
 					else
 					{
 						forward += dt * decel_factor;
+						if (forward > 0)
+							forward = 0;
+					}
+				}
+				if (brake != 0)
+				{
+					if (forward > 0)
+					{
+						forward -= dt * brake_factor;
+						if (forward < 0)
+							forward = 0;
+					}
+					else
+					{
+						forward += dt * brake_factor;
 						if (forward > 0)
 							forward = 0;
 					}
