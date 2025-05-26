@@ -4,13 +4,20 @@ and may not be redistributed without written permission.*/
 //Using SDL and standard IO
 #include <SDL.h>
 #include <stdio.h>
-#include<winsock2.h>
-#include <WS2tcpip.h>
-#include "WinUdpClient.h"
 
 #include <math.h>
 #include <vector>
-#include "winserial.h"
+#ifdef PLATFORM_WINDOWS
+	#include "winserial.h"
+	#include<winsock2.h>
+	#include <WS2tcpip.h>
+	#include "WinUdpClient.h"
+	#pragma comment(lib,"ws2_32.lib") //Winsock Library
+#elif defined(PLATFORM_LINUX)
+	#include "linux-serial.h"
+	#include "linux-udp.h"
+#endif
+
 #include "PPP.h"
 #include "colors.h"
 #include "args-parsing.h"
@@ -18,7 +25,6 @@ and may not be redistributed without written permission.*/
 #include "trig_fixed.h"
 
 
-#pragma comment(lib,"ws2_32.lib") //Winsock Library
 
 
 enum { POSITION = 0xFA, TURBO = 0xFB, STEALTH = 0xFC };
