@@ -9,6 +9,7 @@ and may not be redistributed without written permission.*/
 #include <vector>
 #include "UdpSocket.h"
 #include "PPP.h"
+#include "ppp-parsing.h"
 #include "colors.h"
 #include "args-parsing.h"
 #include <algorithm>
@@ -41,37 +42,6 @@ static uint8_t gl_ser_readbuf[512] = { 0 };
 static float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
 
 
-/*
-Generic hex checksum calculation.
-TODO: use this in the psyonic API
-*/
-uint32_t fletchers_checksum32(uint32_t* arr, int size)
-{
-	int32_t checksum = 0;
-	int32_t fchk = 0;
-	for (int i = 0; i < size; i++)
-	{
-		checksum += (int32_t)arr[i];
-		fchk += checksum;
-	}
-	return fchk;
-}
-
-/*
-Generic hex checksum calculation.
-TODO: use this in the psyonic API
-*/
-uint16_t fletchers_checksum16(uint16_t* arr, int size)
-{
-	int16_t checksum = 0;
-	int16_t fchk = 0;
-	for (int i = 0; i < size; i++)
-	{
-		checksum += (int16_t)arr[i];
-		fchk += checksum;
-	}
-	return fchk;
-}
 
 
 /*Value clamping symmetric about zero*/

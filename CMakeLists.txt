@@ -17,7 +17,7 @@ set(SOURCES
     PPP.cpp
     ppp-parsing.cpp
 	magsensor.cpp
-    sauron-eye-closedform-ik.cpp
+    trig_fixed.cpp
 )
 
 set(HEADERS
@@ -28,7 +28,8 @@ set(HEADERS
     ppp-parsing.h
     u32_fmt_t.h
 	magsensor.h
-    sauron-eye-closedform-ik.h
+    UdpSocket.h
+    trig_fixed.h
 )
 
 # Platform-specific source files

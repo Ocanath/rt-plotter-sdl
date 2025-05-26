@@ -15,6 +15,7 @@
     #include <arpa/inet.h>
     #include <unistd.h>
     #include <fcntl.h>
+	#include <cerrno>
 #endif
 
 class UdpSocket {
