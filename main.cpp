@@ -7,22 +7,13 @@ and may not be redistributed without written permission.*/
 
 #include <math.h>
 #include <vector>
-#ifdef PLATFORM_WINDOWS
-	#include "winserial.h"
-	#include<winsock2.h>
-	#include <WS2tcpip.h>
-	#include "WinUdpClient.h"
-	#pragma comment(lib,"ws2_32.lib") //Winsock Library
-#elif defined(PLATFORM_LINUX)
-	#include "linux-serial.h"
-	#include "linux-udp.h"
-#endif
-
+#include "UdpSocket.h"
 #include "PPP.h"
 #include "colors.h"
 #include "args-parsing.h"
 #include <algorithm>
 #include "trig_fixed.h"
+
 
 
 
@@ -97,18 +88,11 @@ int main(int argc, char* args[])
 {
 	parse_args(argc, args, &gl_options);
 
-	WinUdpClient client(6701);
-	struct sockaddr_in server;
-	server.sin_family = AF_INET;
-	server.sin_addr = in4addr_any;
-	server.sin_port = htons(6701);
-	client.set_nonblocking();
-	client.si_other.sin_family = AF_INET;
-	//client.si_other.sin_addr.S_un.S_addr = inet_addr("192.168.123.255");
-	//TODO: auto address discovery with WHO_GOES_THERE
-	inet_pton(AF_INET, "192.168.123.86", &client.si_other.sin_addr);
-	sendto(client.s, (const char*)"SPAM_ME", 7, 0, (struct sockaddr*)&client.si_other, client.slen);
-	bind(client.s, (struct sockaddr*)&server, sizeof(server));
+	UdpSocket client;
+	client.setNonBlocking();
+	client.bindTo("0.0.0.0", 6701);  // Bind to all interfaces
+	client.setTarget("192.168.123.86", 6701);
+	client.sendTo("SPAM_ME", 7);
 
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
@@ -231,7 +215,7 @@ int main(int argc, char* args[])
 				chkidx++;
 				int pld_size = chkidx * sizeof(uint16_t);
 				int stuffed_size = PPP_stuff(pld, pld_size, gl_ppp_stuffing_buffer, sizeof(gl_ppp_stuffing_buffer));
-				sendto(client.s, (const char*)gl_ppp_stuffing_buffer, stuffed_size, 0, (struct sockaddr*)&client.si_other, client.slen);
+				client.sendTo((const char*)gl_ppp_stuffing_buffer, stuffed_size);
 
 
 				SDL_PollEvent(&e);
@@ -264,9 +248,6 @@ int main(int argc, char* args[])
 
 	//Quit SDL subsystems
 	SDL_Quit();
-
-	closesocket(client.s);
-	WSACleanup();
 
 	printf("Tore everything down, exiting nicely\n");
 	return 0;
