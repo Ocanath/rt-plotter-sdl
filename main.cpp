@@ -196,8 +196,8 @@ int main(int argc, char* args[])
 
 				double rate_scale = 0.1;
 				double turbo_accel = 0.05;
-				double decel_factor = 0.1;
-				double brake_factor = 0.5;
+				double decel_factor = 0.3;
+				double brake_factor = 0.6;
 
 				double dt = (double)delta*.001;
 				if (throttle)
