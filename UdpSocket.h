@@ -18,9 +18,11 @@
 	#include <cerrno>
 #endif
 
-class UdpSocket {
+class UdpSocket 
+{
 public:
-    UdpSocket() {
+    UdpSocket() 
+	{
         #ifdef PLATFORM_WINDOWS
             // Initialize Winsock
             if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
@@ -48,7 +50,8 @@ public:
         si_other.sin_family = AF_INET;
     }
 
-    ~UdpSocket() {
+    ~UdpSocket() 
+	{
         #ifdef PLATFORM_WINDOWS
             closesocket(s);
             WSACleanup();
@@ -57,7 +60,8 @@ public:
         #endif
     }
 
-    bool setNonBlocking() {
+    bool setNonBlocking() 
+	{
         #ifdef PLATFORM_WINDOWS
             u_long iMode = 1;
             return ioctlsocket(s, FIONBIO, &iMode) == 0;
@@ -68,18 +72,22 @@ public:
         #endif
     }
 
-    bool bindTo(const char* ip, uint16_t port) {
+    bool bindTo(const char* ip, uint16_t port) 
+	{
         struct sockaddr_in server;
         memset((char*)&server, 0, sizeof(server));
         server.sin_family = AF_INET;
         
-        if (ip == nullptr || strcmp(ip, "0.0.0.0") == 0) {
+        if (ip == nullptr || strcmp(ip, "0.0.0.0") == 0) 
+		{
             #ifdef PLATFORM_WINDOWS
                 server.sin_addr = in4addr_any;
             #elif defined(PLATFORM_LINUX)
                 server.sin_addr.s_addr = INADDR_ANY;
             #endif
-        } else {
+        } 
+		else 
+		{
             inet_pton(AF_INET, ip, &server.sin_addr);
         }
         
@@ -88,28 +96,33 @@ public:
         return ::bind(s, (struct sockaddr*)&server, sizeof(server)) == 0;
     }
 
-    bool setTarget(const char* ip, uint16_t port) {
+    bool setTarget(const char* ip, uint16_t port) 
+	{
         si_other.sin_port = htons(port);
         return inet_pton(AF_INET, ip, &si_other.sin_addr) == 1;
     }
 
-    int sendTo(const void* data, size_t length) {
+    int sendTo(const void* data, size_t length) 
+	{
         return sendto(s, (const char*)data, length, 0, 
                      (struct sockaddr*)&si_other, sizeof(si_other));
     }
 
-    int receiveFrom(void* buffer, size_t length, char* src_ip = nullptr, uint16_t* src_port = nullptr) {
+    int receiveFrom(void* buffer, size_t length, char* src_ip = nullptr, uint16_t* src_port = nullptr) 
+	{
         struct sockaddr_in src_addr;
         socklen_t addr_len = sizeof(src_addr);
         
         int received = recvfrom(s, (char*)buffer, length, 0, 
                               (struct sockaddr*)&src_addr, &addr_len);
         
-        if (received > 0 && src_ip != nullptr) {
+        if (received > 0 && src_ip != nullptr) 
+		{
             inet_ntop(AF_INET, &src_addr.sin_addr, src_ip, INET_ADDRSTRLEN);
         }
         
-        if (received > 0 && src_port != nullptr) {
+        if (received > 0 && src_port != nullptr) 
+		{
             *src_port = ntohs(src_addr.sin_port);
         }
         
