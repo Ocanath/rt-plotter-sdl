@@ -183,7 +183,7 @@ int main(int argc, char* args[])
 
 
 
-				double kbvx = (double)accum_mouse_x / 1000.;
+				double kbvx = -(double)accum_mouse_x / 1000.;
 				double kbvy = (double)accum_mouse_y / 1000.;
 
 				double vx = kbvx;
