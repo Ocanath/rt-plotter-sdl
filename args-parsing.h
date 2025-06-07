@@ -6,7 +6,6 @@
 typedef struct cmd_options_t
 {
 	uint8_t spread_lines;
-	int baud_rate;
 	float yscale;
 	uint8_t print_vals;
 	uint8_t print_only;
@@ -16,10 +15,8 @@ typedef struct cmd_options_t
 	float parser_yscale;
 	int print_in_parser_every_n;
 	int num_widths;
-	uint8_t write_dummy_loopback;
-	uint8_t offaxis_encoder;
-	uint8_t fsr_sensor;
-	uint8_t temp_sensor;
+	int16_t udp_port;
+	
 }cmd_options_t;
 
 extern cmd_options_t gl_options;

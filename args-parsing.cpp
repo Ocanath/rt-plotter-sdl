@@ -6,7 +6,6 @@
 
 cmd_options_t gl_options = {
 	0,	//spread lines
-	2000000,	//baud rate
 	0.1,	//yscale,
 	0,	//print values to console
 	0, //print values to console ONLY (no actual plotting!)
@@ -16,10 +15,7 @@ cmd_options_t gl_options = {
 	1.f, //console scaler
 	1,	//integer modulo for plotting printing
 	3,	//number of widths
-	0,	//write loopback data for basic testing
-	0,	//offaxis-encoder
-	0,	//fsr-sensor
-	0	//temp-sensor
+	6810	//udp port
 };
 
 std::string gl_csvheader;
@@ -47,20 +43,6 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 			{
 				popts->spread_lines = 1;
 				snprintf(printstr, sizeof(printstr), "Spreading lines\r\n");
-			}
-			if (strcmp("--baudrate", argv[i]) == 0)
-			{
-				
-				if (argc > (i + 1))
-				{
-					int value = strtol(argv[i + 1], &tmp, 10);
-					popts->baud_rate = value;
-					snprintf(printstr, sizeof(printstr),  "Overriding baudrate as %d\r\n", popts->baud_rate);
-				}
-				else
-				{
-					snprintf(printstr, sizeof(printstr),  "invalid baudrate format\r\n");
-				}
 			}
 			if (strcmp("--yscale", argv[i]) == 0)
 			{
@@ -136,26 +118,6 @@ void parse_args(int argc, char* argv[], cmd_options_t * popts)
 			{
 				popts->xy_mode = 1;
 				snprintf(printstr, sizeof(printstr),  "Using xy mode...\r\n");
-			}
-			if (strcmp("--loopback", argv[i]) == 0)
-			{
-				popts->write_dummy_loopback = 1;
-				snprintf(printstr, sizeof(printstr), "Writing Dummy Data...\r\n");
-			}
-			if (strcmp("--offaxis-encoder", argv[i]) == 0)
-			{
-				popts->offaxis_encoder = 1;
-				snprintf(printstr, sizeof(printstr), "Parsing as offaxis encoder\r\n");
-			}
-			if(strcmp("--fsr", argv[i]) == 0)
-			{
-				popts->fsr_sensor = 1;
-				snprintf(printstr, sizeof(printstr), "Parsing as fsr sensor\r\n");
-			}
-			if (strcmp("--tempsensor", argv[i]) == 0)
-			{
-				popts->temp_sensor = 1;
-				snprintf(printstr, sizeof(printstr), "\r\n");
 			}
 			if (strcmp("--help", argv[i]) == 0)
 			{

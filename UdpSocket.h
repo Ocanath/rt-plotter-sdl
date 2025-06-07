@@ -21,6 +21,8 @@
 class UdpSocket 
 {
 public:
+    unsigned char recv_buffer[1024];
+
     UdpSocket() 
 	{
         #ifdef PLATFORM_WINDOWS
@@ -108,12 +110,12 @@ public:
                      (struct sockaddr*)&si_other, sizeof(si_other));
     }
 
-    int receiveFrom(void* buffer, size_t length, char* src_ip = nullptr, uint16_t* src_port = nullptr) 
+    int receiveFrom(char* src_ip = nullptr, uint16_t* src_port = nullptr) 
 	{
         struct sockaddr_in src_addr;
         socklen_t addr_len = sizeof(src_addr);
         
-        int received = recvfrom(s, (char*)buffer, length, 0, 
+        int received = recvfrom(s, (char*)recv_buffer, sizeof(recv_buffer), 0, 
                               (struct sockaddr*)&src_addr, &addr_len);
         
         if (received > 0 && src_ip != nullptr) 
