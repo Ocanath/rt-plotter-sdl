@@ -35,13 +35,13 @@ int connect_to_usb_serial(HANDLE* serial_handle, const char* com_port_name, unsi
 
 HANDLE serialport;
 
-int autoconnect_serial(void)
+int autoconnect_serial(uint32_t baud_rate)
 {
 	char namestr[16] = { 0 };
 	for (int i = 0; i < 255; i++)
 	{
 		int rl = sprintf_s(namestr, "\\\\.\\COM%d", i);
-		int rc = connect_to_usb_serial(&serialport, namestr, gl_options.baud_rate);
+		int rc = connect_to_usb_serial(&serialport, namestr, baud_rate);
 		if (rc != 0)
 		{
 			if (!(gl_options.csv_header == 1 && (gl_options.print_only == 1 || gl_options.print_in_parser == 1)))

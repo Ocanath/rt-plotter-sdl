@@ -1,6 +1,7 @@
 #include <SDL.h>
 #include <stdio.h>
 #include <vector>
+#include "UdpSocket.h"
 
 #ifdef PLATFORM_WINDOWS
 #include "winserial.h"
@@ -14,11 +15,12 @@
 #include <algorithm>
 #include "fsrs.h"
 #include "ppp-parsing.h"
-#include "UdpSocket.h"
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 1200;
 const int SCREEN_HEIGHT = 800;
+extern float gl_valdump[PAYLOAD_SIZE / sizeof(float)];
+
 
 typedef struct fpoint_t
 {
@@ -101,10 +103,6 @@ int main(int argc, char* args[])
 				}
 
 				uint8_t new_pkt = 0;
-				if (gl_options.write_dummy_loopback)
-				{
-					write_dummy_loopback(SDL_GetTicks64());
-				}
 
 				int bytes_received = client.receiveFrom();
 				if (bytes_received > 0)
@@ -365,8 +363,6 @@ int main(int argc, char* args[])
 
 	//Quit SDL subsystems
 	SDL_Quit();
-
-	close_serial();
 
 	return 0;
 }
