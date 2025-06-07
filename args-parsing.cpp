@@ -7,7 +7,7 @@
 cmd_options_t gl_options = {
 	0,	//spread lines
 	0.1,	//yscale,
-	0,	//print values to console
+	1,	//print values to console
 	0, //print values to console ONLY (no actual plotting!)
 	0, //print in parser flag active
 	0,	//xy mode

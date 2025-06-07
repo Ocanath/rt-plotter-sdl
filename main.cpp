@@ -104,8 +104,8 @@ int main(int argc, char* args[])
 
 				uint8_t new_pkt = 0;
 
-				int bytes_received = client.receiveFrom();
-				if (bytes_received > 0)
+				pld_size = client.receiveFrom();
+				if (pld_size == 12)
 				{
 					if (gl_options.xy_mode == 0)
 					{
@@ -117,6 +117,29 @@ int main(int argc, char* args[])
 						parse_PPP_values_noscale(client.recv_buffer, pld_size, gl_valdump, &wordsize);
 						new_pkt = 1;
 					}		
+					//obtain consecutive matching counts
+					if (wordsize == previous_wordsize && wordsize > 0)
+					{
+						wordsize_match_count++;
+						if (gl_options.print_vals || gl_options.print_only)
+						{
+							cycle_count_for_printing = (cycle_count_for_printing + 1) % gl_options.print_in_parser_every_n;
+							if (cycle_count_for_printing == 0)
+							{
+								for (int fvidx = 0; fvidx < wordsize - 1; fvidx++)
+								{
+									float val = gl_valdump[fvidx] * gl_options.parser_yscale;
+									printf("%0.6f, ", val);
+								}
+								printf("%0.6f\n", gl_valdump[wordsize - 1]);	//time is always in ms coming in, so no scaling with yscale here
+							}
+						}
+					}
+					else
+					{
+						wordsize_match_count = 0;
+					}
+					previous_wordsize = wordsize;
 				}
 
 				// pld_size = 0;
@@ -157,29 +180,6 @@ int main(int argc, char* args[])
 				// 			}
 				// 		}
 
-				// 		//obtain consecutive matching counts
-				// 		if (wordsize == previous_wordsize && wordsize > 0)
-				// 		{
-				// 			wordsize_match_count++;
-				// 			if (gl_options.print_vals || gl_options.print_only)
-				// 			{
-				// 				cycle_count_for_printing = (cycle_count_for_printing + 1) % gl_options.print_in_parser_every_n;
-				// 				if (cycle_count_for_printing == 0)
-				// 				{
-				// 					for (int fvidx = 0; fvidx < wordsize-1; fvidx++)
-				// 					{
-				// 						float val = gl_valdump[fvidx] * gl_options.parser_yscale;
-				// 						printf("%0.6f, ", val);
-				// 					}
-				// 					printf("%0.6f\n", gl_valdump[wordsize - 1]);	//time is always in ms coming in, so no scaling with yscale here
-				// 				}
-				// 			}
-				// 		}
-				// 		else
-				// 		{
-				// 			wordsize_match_count = 0;
-				// 		}
-				// 		previous_wordsize = wordsize;
 				// 	}
 				// }
 
