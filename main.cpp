@@ -36,12 +36,14 @@ int main(int argc, char* args[])
 	client.setNonBlocking();
 	client.bindTo("0.0.0.0", gl_options.udp_port);  // Bind to all interfaces
 	client.setTarget("192.168.50.140", gl_options.udp_port);
-	client.sendTo("SPAM ME", 7);
+	client.sendTo("SPAM_ME", 7);
 
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
 
 	SDL_Color bgColor = { 10, 10, 10, 255 };
+
+
 
 	//Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -92,6 +94,7 @@ int main(int argc, char* args[])
 			int number_of_frames_buffered = 0;
 			uint64_t new_pkt_received_ts = 0;
 			uint8_t timeout_occurred = 0;
+			uint64_t tx_ts = 0;
 			while (quit == false) 
 			{
 				uint64_t tick = SDL_GetTicks64() - start_tick;
@@ -101,20 +104,31 @@ int main(int argc, char* args[])
 					SDL_SetRenderDrawColor(pRenderer, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
 					SDL_RenderClear(pRenderer);
 				}
+				
+				if (tick - tx_ts > 10)
+				{
+					tx_ts = tick;
+					int32_t vals[] = { 0,0 };
+					uint8_t stuffbuff[sizeof(vals) * 2 + 2] = {};
+					int len = PPP_stuff((uint8_t*)vals, sizeof(vals), stuffbuff, sizeof(stuffbuff));
+					client.sendTo(stuffbuff, len);
+				}
 
 				uint8_t new_pkt = 0;
 
 				pld_size = client.receiveFrom();
-				if (pld_size == 12)
+				if ( (pld_size % 4) == 0 && client.recv_buffer[0] == 'f' && client.recv_buffer[1] == 'u' && client.recv_buffer[2] == 'c' && client.recv_buffer[3] == 'k')
 				{
+					uint8_t* buffer = &client.recv_buffer[sizeof(uint32_t)];	//fuck
+					pld_size -= sizeof(uint32_t);	//fuck
 					if (gl_options.xy_mode == 0)
 					{
-						parse_PPP_values(client.recv_buffer, pld_size, gl_valdump, &wordsize);
+						parse_PPP_values(&client.recv_buffer[4], pld_size, gl_valdump, &wordsize);
 						new_pkt = 1;
 					}
 					else
 					{
-						parse_PPP_values_noscale(client.recv_buffer, pld_size, gl_valdump, &wordsize);
+						parse_PPP_values_noscale(&client.recv_buffer[4], pld_size, gl_valdump, &wordsize);
 						new_pkt = 1;
 					}		
 					//obtain consecutive matching counts
